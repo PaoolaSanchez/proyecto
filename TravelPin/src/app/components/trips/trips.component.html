@@ -1,0 +1,181 @@
+<div class="trips-container">
+  <!-- Header -->
+  <header class="trips-header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">✈️</div>
+        <span class="logo-text">TravelPlus</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Title Section -->
+  <div class="title-section">
+    <h1 class="trips-title">Mis Viajes</h1>
+    <button class="btn-create" (click)="crearViaje()">Crear Viaje</button>
+  </div>
+
+  <!-- Trips List -->
+  <main class="trips-content">
+    <div *ngIf="viajes.length === 0" class="empty-state">
+      <div class="empty-icon">✈️</div>
+      <h3 class="empty-title">No tienes viajes planeados</h3>
+      <p class="empty-text">Crea tu primer viaje y comienza a planear tu aventura</p>
+      <button class="btn-empty-create" (click)="crearViaje()">Crear Viaje</button>
+    </div>
+
+    <div class="trips-grid">
+      <div 
+        *ngFor="let viaje of viajes" 
+        class="trip-card"
+        [class.finalizado]="viaje.finalizado"
+        (click)="irADetalleViaje(viaje)">
+        
+        <!-- Trip Icon -->
+        <div class="trip-icon">{{ viaje.icono }}</div>
+
+        <!-- Trip Content -->
+        <div class="trip-content">
+          <h3 class="trip-name">{{ viaje.nombre }}</h3>
+          
+          <!-- Estado Badge -->
+          <div class="estado-badge" [class.finalizado]="viaje.finalizado">
+            {{ viaje.finalizado ? '✓ Finalizado' : '📍 Próximo' }}
+          </div>
+
+          <!-- Fechas -->
+          <div class="trip-dates-small" *ngIf="viaje.fechaInicio && viaje.fechaFin">
+            <span class="trip-date">📅 {{ viaje.fechaInicio }}</span>
+            <span class="trip-date-separator">→</span>
+            <span class="trip-date">{{ viaje.fechaFin }}</span>
+          </div>
+
+          <!-- Días restantes -->
+          <div class="dias-restantes" *ngIf="!viaje.finalizado && getDiasRestantes(viaje) !== null">
+            <span class="dias-badge" [class.urgente]="getDiasRestantes(viaje)! <= 7">
+              ⏰ {{ getMensajeDiasRestantes(viaje) }}
+            </span>
+          </div>
+
+          <!-- Destinos count -->
+          <p class="trip-destinations">{{ getContadorDestinos(viaje) }}</p>
+
+          <!-- Destinations Preview -->
+          <div class="destinations-preview" *ngIf="viaje.destinos.length > 0">
+            <img 
+              *ngFor="let destino of viaje.destinos.slice(0, 3)" 
+              [src]="destino.imagen" 
+              [alt]="destino.nombre"
+              class="destination-mini-img">
+            <span class="more-destinations" *ngIf="viaje.destinos.length > 3">
+              +{{ viaje.destinos.length - 3 }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="trip-actions">
+          <button 
+            class="btn-action edit" 
+            (click)="editarViaje(viaje, $event)"
+            title="Editar">
+            ✏️
+          </button>
+          <button 
+            class="btn-action delete" 
+            (click)="eliminarViaje(viaje, $event)"
+            title="Eliminar">
+            🗑️
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item" 
+            [class.active]="currentTab === 'inicio'"
+            (click)="navegarTab('inicio')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'explorar'"
+            (click)="navegarTab('explorar')">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    
+    <button class="nav-item active" 
+            [class.active]="currentTab === 'viajes'"
+            (click)="navegarTab('viajes')">
+      <span class="nav-icon">🧳</span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'favoritos'"
+            (click)="navegarTab('favoritos')">
+      <span class="nav-icon">💖</span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'perfil'"
+            (click)="navegarTab('perfil')">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
+
+<div class="modal-overlay" *ngIf="mostrarModalCrearViaje" (click)="cerrarModalCrearViaje()">
+  <div class="modal-crear-viaje" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">Planificar un nuevo Viaje</h2>
+      <button class="btn-close-modal" (click)="cerrarModalCrearViaje()">✕</button>
+    </div>
+
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Nombre del viaje (ej. Verano en Italia)</label>
+        <input 
+          type="text" 
+          class="form-input"
+          [(ngModel)]="nuevoViajeNombre"
+          placeholder="Nombre del viaje"
+          maxlength="50">
+      </div>
+
+      <div class="form-subtitle">Describe tu aventura ...</div>
+
+      <div class="form-row">
+        <div class="form-group half">
+          <label class="form-label">Fecha de Salida</label>
+          <input 
+            type="text" 
+            class="form-input"
+            [(ngModel)]="nuevoViajeFechaInicio"
+            placeholder="dd/mm/aaaa">
+        </div>
+
+        <div class="form-group half">
+          <label class="form-label">Fecha de Regreso</label>
+          <input 
+            type="text" 
+            class="form-input"
+            [(ngModel)]="nuevoViajeFechaFin"
+            placeholder="dd/mm/aaaa">
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn-guardar-viaje" (click)="guardarNuevoViaje()">
+        Guardar Viaje
+      </button>
+    </div>
+  </div>
+</div>

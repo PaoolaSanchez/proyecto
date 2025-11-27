@@ -1,0 +1,153 @@
+<div class="profile-container">
+  <!-- Header -->
+  <header class="profile-header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">✈️</div>
+        <span class="logo-text">TravelPlus</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="profile-content">
+    <!-- User Info Section -->
+    <section class="user-section">
+      <div class="user-avatar">
+        <div class="avatar-circle">
+          {{ usuario.iniciales }}
+        </div>
+      </div>
+      
+      <h2 class="user-name">{{ usuario.nombre }}</h2>
+      <p class="user-email">{{ usuario.email }}</p>
+
+      <!-- Stats -->
+      <div class="user-stats">
+        <div class="stat-item" (click)="navegarTab('favoritos')" style="cursor: pointer;">
+          <div class="stat-icon">❤️</div>
+          <div class="stat-number">{{ usuario.favoritos }}</div>
+          <div class="stat-label">Favoritos</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item" (click)="navegarTab('viajes')" style="cursor: pointer;">
+          <div class="stat-icon">🧳</div>
+          <div class="stat-number">{{ usuario.viajes }}</div>
+          <div class="stat-label">Viajes</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Configuration Section -->
+    <section class="config-section">
+      <h3 class="section-title">Configuración</h3>
+
+      <button class="config-option" (click)="abrirEditarPerfil()">
+        <div class="option-icon">
+          <span class="icon-emoji">⚙️</span>
+        </div>
+        <div class="option-content">
+          <h4 class="option-title">Editar Perfil</h4>
+          <p class="option-subtitle">Actualiza tu información personal</p>
+        </div>
+        <span class="option-arrow">›</span>
+      </button>
+    </section>
+
+    <!-- Info Section -->
+    <section class="info-section">
+      <div class="info-box">
+        <h3 class="info-title">¡Gracias por usar TravelPlus!</h3>
+        <p class="info-text">
+          Descubre lugares increíbles y planifica tus próximas aventuras.
+        </p>
+        <p class="info-version">versión 10.0.1</p>
+      </div>
+    </section>
+
+    <!-- Logout Button -->
+    <section class="logout-section">
+      <button class="btn-logout" (click)="cerrarSesion()">
+        <span class="logout-icon">→</span>
+        <span>Cerrar Sesión</span>
+      </button>
+    </section>
+  </main>
+
+  <!-- Modal Editar Perfil -->
+  <div class="modal-overlay" *ngIf="mostrarEditarPerfil" (click)="cerrarEditarPerfil()">
+    <div class="modal-edit-profile" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Editar Perfil</h2>
+        <button class="btn-close-modal" (click)="cerrarEditarPerfil()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Nombre</label>
+          <input 
+            type="text" 
+            class="form-input"
+            [(ngModel)]="nombreTemporal"
+            placeholder="Tu nombre completo">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input 
+            type="email" 
+            class="form-input"
+            [(ngModel)]="emailTemporal"
+            placeholder="tu@email.com">
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn-cancel" (click)="cerrarEditarPerfil()">
+          Cancelar
+        </button>
+        <button class="btn-save" (click)="guardarCambiosPerfil()">
+          Guardar Cambios
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item" 
+            [class.active]="currentTab === 'inicio'"
+            (click)="navegarTab('inicio')">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'explorar'"
+            (click)="navegarTab('explorar')">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'viajes'"
+            (click)="navegarTab('viajes')">
+      <span class="nav-icon">🧳</span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'favoritos'"
+            (click)="navegarTab('favoritos')">
+      <span class="nav-icon">💖</span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'perfil'"
+            (click)="navegarTab('perfil')">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>

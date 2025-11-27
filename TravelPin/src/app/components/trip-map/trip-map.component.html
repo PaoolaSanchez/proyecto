@@ -1,0 +1,63 @@
+<div class="map-container">
+  <!-- Header -->
+  <header class="map-header">
+    <button class="back-btn" (click)="volverAtras()">
+      ←
+    </button>
+    <div class="header-info">
+      <h1 class="map-title">Mapa del Viaje</h1>
+      <p class="map-subtitle">{{ nombreViaje }}</p>
+    </div>
+  </header>
+
+  <!-- Map -->
+  <div id="map" class="map-view"></div>
+
+  <!-- Destinos List -->
+  <div class="destinos-overlay">
+    <h3 class="overlay-title">Destinos ({{ destinos.length }})</h3>
+    
+    <div *ngIf="destinos.length === 0" class="empty-destinos">
+      No hay destinos en el itinerario
+    </div>
+
+    <div class="destinos-list">
+      <div 
+        *ngFor="let destino of destinos; let i = index" 
+        class="destino-card"
+        (click)="centrarEnDestino(destino, i)">
+        <div class="destino-number">{{ i + 1 }}</div>
+        <img [src]="destino.imagen" [alt]="destino.nombre" class="destino-image">
+        <div class="destino-info">
+          <h4 class="destino-name">{{ destino.nombre }}</h4>
+          <p class="destino-country">{{ destino.pais }}</p>
+        </div>
+        <span class="destino-arrow">→</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    <button class="nav-item">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    <button class="nav-item active">
+      <span class="nav-icon">🧳</span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    <button class="nav-item">
+      <span class="nav-icon">💖</span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    <button class="nav-item">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>

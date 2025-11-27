@@ -1,0 +1,407 @@
+<div class="detail-container" *ngIf="destinoActual">
+  <!-- Header -->
+  <header class="detail-header">
+    <button class="back-btn" (click)="volverAtras()">←</button>
+    <h1 class="detail-title">{{ destinoActual.nombre }}</h1>
+    <button class="share-btn" (click)="compartir()">⤴</button>
+  </header>
+
+  <!-- Imagen Principal -->
+  <div class="main-image-container">
+    <img [src]="destinoActual.imagenPrincipal" [alt]="destinoActual.nombre" class="main-image">
+    <div class="image-overlay">
+      <h2 class="destination-name">{{ destinoActual.nombre }}</h2>
+      <p class="destination-country">📍 {{ destinoActual.pais }}</p>
+    </div>
+  </div>
+
+  <!-- Galería de Imágenes -->
+  <div class="gallery-container">
+    <div class="gallery-scroll">
+      <img 
+        *ngFor="let imagen of destinoActual.imagenesGaleria" 
+        [src]="imagen" 
+        [alt]="destinoActual.nombre"
+        class="gallery-image">
+    </div>
+  </div>
+
+  <!-- Tabs Navigation -->
+  <div class="tabs-navigation">
+    <button 
+      class="tab-btn" 
+      [class.active]="tabActiva === 'informacion'"
+      (click)="cambiarTab('informacion')">
+      Información
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="tabActiva === 'consejos'"
+      (click)="cambiarTab('consejos')">
+      Consejos
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="tabActiva === 'agencias'"
+      (click)="cambiarTab('agencias')">
+      Agencias
+    </button>
+    <button 
+      class="tab-btn" 
+      [class.active]="tabActiva === 'contacto'"
+      (click)="cambiarTab('contacto')">
+      Contacto
+    </button>
+  </div>
+
+  <!-- Contenido de las pestañas -->
+  <div class="tab-content">
+    <!-- Información -->
+    <div *ngIf="tabActiva === 'informacion' && !mostrarDetalleAgencia && !mostrarDetallePaquete" class="tab-panel">
+      <div class="info-section">
+        <h3 class="section-title">Sobre {{ destinoActual.nombre }}</h3>
+        <p class="section-description">{{ destinoActual.descripcion }}</p>
+        
+        <!-- Qué hacer -->
+        <div class="subsection">
+          <h4 class="subsection-title">✨ Qué hacer</h4>
+          <ul class="activities-list">
+            <li *ngFor="let actividad of destinoActual.queHacer" class="activity-item">
+              {{ actividad }}
+            </li>
+          </ul>
+        </div>
+
+        <!-- Detalles del Viaje -->
+        <div class="subsection">
+          <h4 class="subsection-title">📋 Detalles del Viaje</h4>
+          <div class="details-grid">
+            <div class="detail-item">
+              <span class="detail-icon">🌤️</span>
+              <div class="detail-info">
+                <span class="detail-label">Mejor época</span>
+                <span class="detail-value">{{ destinoActual.detallesViaje.mejorEpoca }}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">⏱️</span>
+              <div class="detail-info">
+                <span class="detail-label">Duración</span>
+                <span class="detail-value">{{ destinoActual.detallesViaje.duracionRecomendada }}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="detail-icon">💰</span>
+              <div class="detail-info">
+                <span class="detail-label">Presupuesto</span>
+                <span class="detail-value">{{ destinoActual.detallesViaje.presupuestoPromedio }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Qué llevar -->
+        <div class="subsection">
+          <h4 class="subsection-title">🎒 Qué llevar</h4>
+          <div class="items-grid">
+            <span *ngFor="let item of destinoActual.queEllevar" class="item-badge">
+              {{ item }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Consejos -->
+    <div *ngIf="tabActiva === 'consejos' && !mostrarDetalleAgencia && !mostrarDetallePaquete" class="tab-panel">
+      <div class="consejos-section">
+        <h3 class="consejos-title">💡 Consejos de viaje</h3>
+        <ul class="consejos-list">
+          <li *ngFor="let consejo of destinoActual.consejos" class="consejo-item">
+            <span class="consejo-icon">✓</span>
+            {{ consejo }}
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Agencias -->
+    <div *ngIf="tabActiva === 'agencias' && !mostrarDetalleAgencia && !mostrarDetallePaquete" class="tab-panel">
+      <div class="agencias-intro">
+        <h3 class="agencias-title">🏢 Agencias Especializadas</h3>
+        <p class="agencias-subtitle">
+          Descubre paquetes todo incluido para {{ destinoActual.nombre }} ofrecidos por agencias certificadas
+        </p>
+      </div>
+
+      <!-- Lista de agencias -->
+      <div class="agencias-preview">
+        <div 
+          class="agency-preview-card" 
+          *ngFor="let agencia of getAgenciasParaDestino()"
+          (click)="verDetalleAgencia(agencia)">
+          <div class="agency-preview-logo">{{ agencia.logo }}</div>
+          <div class="agency-preview-info">
+            <h4 class="agency-preview-name">{{ agencia.nombre }}</h4>
+            <p class="agency-preview-description">{{ agencia.descripcion }}</p>
+            <div class="agency-preview-meta">
+              <span class="preview-rating">
+                ⭐ {{ agencia.rating }}
+              </span>
+              <span class="preview-packages">
+                {{ contarPaquetes(agencia.id) }} paquetes disponibles
+              </span>
+            </div>
+          </div>
+          <span class="arrow-icon">›</span>
+        </div>
+
+        <!-- Sin agencias -->
+        <div *ngIf="getAgenciasParaDestino().length === 0" class="no-agencies">
+          <div class="no-agencies-icon">🏢</div>
+          <p class="no-agencies-text">
+            Aún no hay agencias disponibles para este destino
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vista Detalle Agencia -->
+    <div *ngIf="mostrarDetalleAgencia && agenciaSeleccionada && !mostrarDetallePaquete" class="tab-panel">
+      <button class="btn-back-inline" (click)="cerrarDetalleAgencia()">
+        ← Volver a agencias
+      </button>
+
+      <div class="agency-detail-card">
+        <div class="agency-detail-header">
+          <div class="agency-logo-large">{{ agenciaSeleccionada.logo }}</div>
+          <div class="agency-detail-info">
+            <h2 class="agency-detail-name">{{ agenciaSeleccionada.nombre }}</h2>
+            <p class="agency-detail-description">{{ agenciaSeleccionada.descripcion }}</p>
+            <div class="agency-detail-rating">
+              <span *ngFor="let estrella of getEstrellas(agenciaSeleccionada.rating)" class="star">
+                {{ estrella }}
+              </span>
+              <span class="rating-number">{{ agenciaSeleccionada.rating }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Paquetes de la agencia -->
+      <section class="packages-section">
+        <h3 class="section-title">📦 Paquetes Disponibles</h3>
+        
+        <div class="packages-list">
+          <div 
+            *ngFor="let paquete of getPaquetesPorAgencia(agenciaSeleccionada.id)"
+            class="package-card"
+            (click)="verDetallePaquete(paquete)">
+            <div class="package-header">
+              <h4 class="package-name">{{ paquete.nombrePaquete }}</h4>
+              <span class="package-price">${{ paquete.precio.toLocaleString() }}</span>
+            </div>
+            <p class="package-duration">⏱️ {{ paquete.duracion }}</p>
+            <div class="package-includes">
+              <span class="include-badge" *ngFor="let item of paquete.incluye.slice(0, 3)">
+                ✓ {{ item }}
+              </span>
+              <span class="more-includes" *ngIf="paquete.incluye.length > 3">
+                +{{ paquete.incluye.length - 3 }} más
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sin paquetes -->
+        <div *ngIf="getPaquetesPorAgencia(agenciaSeleccionada.id).length === 0" class="no-packages">
+          <p>No hay paquetes disponibles para este destino</p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Vista Detalle Paquete -->
+    <div *ngIf="mostrarDetallePaquete && paqueteSeleccionado" class="tab-panel">
+      <button class="btn-back-inline" (click)="volverAAgencia()">
+        ← Volver a {{ agenciaSeleccionada?.nombre }}
+      </button>
+
+      <div class="package-detail-card">
+        <h2 class="package-detail-name">{{ paqueteSeleccionado.nombrePaquete }}</h2>
+        <div class="package-detail-meta">
+          <span class="detail-duration">⏱️ {{ paqueteSeleccionado.duracion }}</span>
+          <span class="detail-price">${{ paqueteSeleccionado.precio.toLocaleString() }} MXN</span>
+        </div>
+      </div>
+
+      <!-- Incluye -->
+      <section class="detail-section">
+        <h3 class="detail-section-title">✓ Incluye</h3>
+        <ul class="includes-list">
+          <li *ngFor="let item of paqueteSeleccionado.incluye" class="include-item">
+            {{ item }}
+          </li>
+        </ul>
+      </section>
+
+      <!-- Itinerario -->
+      <section class="detail-section">
+        <h3 class="detail-section-title">📅 Itinerario</h3>
+        <div class="itinerary-list">
+          <div *ngFor="let item of paqueteSeleccionado.itinerario" class="itinerary-item">
+            <div class="itinerary-day">Día {{ item.dia }}</div>
+            <div class="itinerary-content">
+              <h4 class="itinerary-activity">{{ item.actividad }}</h4>
+              <p class="itinerary-description">{{ item.descripcion }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Desglose de Gastos -->
+      <section class="detail-section">
+        <h3 class="detail-section-title">💰 Desglose de Gastos</h3>
+        <div class="expenses-list">
+          <div *ngFor="let gasto of paqueteSeleccionado.gastos" class="expense-item">
+            <span class="expense-icon">{{ getIconoCategoria(gasto.categoria) }}</span>
+            <span class="expense-concept">{{ gasto.concepto }}</span>
+            <span class="expense-amount">${{ gasto.monto.toLocaleString() }}</span>
+          </div>
+          <div class="expense-total">
+            <span class="total-label">Total</span>
+            <span class="total-amount">${{ getTotalGastos(paqueteSeleccionado.gastos).toLocaleString() }} MXN</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Formulario de Reserva -->
+      <section class="detail-section">
+        <h3 class="detail-section-title">📝 Reservar Este Paquete</h3>
+        
+        <div class="reservation-form">
+          <div class="form-group">
+            <label class="form-label">Nombre completo</label>
+            <input 
+              type="text" 
+              class="form-input"
+              [(ngModel)]="nombreCliente"
+              placeholder="Tu nombre completo">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input 
+              type="email" 
+              class="form-input"
+              [(ngModel)]="emailCliente"
+              placeholder="tu@email.com">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Teléfono</label>
+            <input 
+              type="tel" 
+              class="form-input"
+              [(ngModel)]="telefonoCliente"
+              placeholder="(555) 123-4567">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Fecha de salida</label>
+            <input 
+              type="date" 
+              class="form-input"
+              [(ngModel)]="fechaSalida">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Número de personas</label>
+            <input 
+              type="number" 
+              class="form-input"
+              [(ngModel)]="numPersonas"
+              min="1"
+              max="10">
+          </div>
+
+          <button class="btn-reserve" (click)="reservarPaquete()">
+            Confirmar Reserva
+          </button>
+
+          <p class="reservation-note">
+            💡 Al reservar, este viaje se agregará automáticamente a tu sección de "Mis Viajes" con todos los detalles incluidos.
+          </p>
+        </div>
+      </section>
+    </div>
+
+    <!-- Contacto -->
+    <div *ngIf="tabActiva === 'contacto' && !mostrarDetalleAgencia && !mostrarDetallePaquete" class="tab-panel">
+      <div class="contacto-section">
+        <h3 class="contacto-title">📞 Información de contacto</h3>
+        
+        <!-- Emergencias -->
+        <div class="emergencias-box">
+          <h4 class="emergencias-title">🚨 Números de Emergencia</h4>
+          <div class="emergencia-item">
+            <span class="emergencia-label">Policía:</span>
+            <span class="emergencia-valor">{{ destinoActual.emergencias.policia }}</span>
+          </div>
+          <div class="emergencia-item">
+            <span class="emergencia-label">Bomberos:</span>
+            <span class="emergencia-valor">{{ destinoActual.emergencias.bomberos }}</span>
+          </div>
+          <div class="emergencia-item">
+            <span class="emergencia-label">Ambulancia:</span>
+            <span class="emergencia-valor">{{ destinoActual.emergencias.ambulancia }}</span>
+          </div>
+          <div class="emergencia-item">
+            <span class="emergencia-label">Embajada:</span>
+            <span class="emergencia-valor">{{ destinoActual.emergencias.embajada }}</span>
+          </div>
+        </div>
+
+        <!-- Información Turística -->
+        <div class="contacto-info">
+          <h4 class="contacto-subtitle">ℹ️ Información Turística</h4>
+          <div class="contacto-item">
+            <span class="contacto-icon">📧</span>
+            <span class="contacto-text">info@{{ destinoActual.nombre.toLowerCase() }}.com</span>
+          </div>
+          <div class="contacto-item">
+            <span class="contacto-icon">📞</span>
+            <span class="contacto-text">+1 800 123 4567</span>
+          </div>
+          <div class="contacto-item">
+            <span class="contacto-icon">🌐</span>
+            <span class="contacto-text">www.{{ destinoActual.nombre.toLowerCase() }}.travel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Buttons (solo en información y consejos) -->
+  <div class="action-buttons" *ngIf="(tabActiva === 'informacion' || tabActiva === 'consejos') && !mostrarDetalleAgencia && !mostrarDetallePaquete">
+    <button class="action-btn primary" (click)="abrirColecciones()">
+      <span class="btn-icon">📌</span>
+      Agregar a Viaje
+    </button>
+    <button class="action-btn secondary" (click)="guardar()">
+      <span class="btn-icon">❤️</span>
+      Guardar
+    </button>
+    <button class="action-btn secondary" (click)="abrirMapa()">
+      <span class="btn-icon">🗺️</span>
+      Ver Mapa
+    </button>
+  </div>
+</div>
+
+<!-- Modal de Colecciones -->
+<app-collections-modal
+  *ngIf="mostrarColecciones && destinoActual"
+  [destinoId]="destinoActual.id"
+  (cerrar)="cerrarColecciones()"
+  (destinoAgregado)="onDestinoAgregado($event)">
+</app-collections-modal>
