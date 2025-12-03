@@ -214,6 +214,31 @@ function inicializarBaseDeDatos(callback) {
       orden INTEGER DEFAULT 0,
       FOREIGN KEY (paquete_id) REFERENCES paquetes(id) ON DELETE CASCADE,
       FOREIGN KEY (destino_id) REFERENCES destinos(id) ON DELETE CASCADE
+    )`,
+    
+    `CREATE TABLE IF NOT EXISTS viaje_itinerario (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      viaje_id INTEGER NOT NULL,
+      fecha TEXT,
+      dia INTEGER,
+      actividad TEXT NOT NULL,
+      destino_id INTEGER,
+      hora TEXT,
+      notas TEXT,
+      completado INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (viaje_id) REFERENCES viajes(id) ON DELETE CASCADE
+    )`,
+    
+    `CREATE TABLE IF NOT EXISTS recordatorios (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      viaje_id INTEGER NOT NULL,
+      titulo TEXT NOT NULL,
+      descripcion TEXT,
+      fecha TEXT,
+      completado INTEGER DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (viaje_id) REFERENCES viajes(id) ON DELETE CASCADE
     )`
   ];
 
@@ -1112,49 +1137,62 @@ app.get('/api/viajes', verificarToken, (req, res) => {
 });
 
 // Crear viaje
-app.post('/api/viajes', verificarToken, (req, res) => {
+app.post('/api/viajes', verificarToken, async (req, res) => {
   const { nombre, icono, fecha_inicio, fecha_fin, destinos } = req.body;
 
-  // Primero obtener datos del usuario desde la base de datos
-  db.get('SELECT nombre, email FROM usuarios WHERE id = ?', [req.userId], (err, usuario) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error al obtener usuario' });
+  try {
+    // Primero obtener datos del usuario desde la base de datos
+    const usuario = await new Promise((resolve, reject) => {
+      db.get('SELECT nombre, email FROM usuarios WHERE id = ?', [req.userId], (err, row) => {
+        if (err) reject(err);
+        else resolve(row);
+      });
+    });
+
+    // Crear el viaje
+    const viajeId = await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO viajes (usuario_id, nombre, icono, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?)',
+        [req.userId, nombre, icono || '✈️', fecha_inicio, fecha_fin],
+        function(err) {
+          if (err) reject(err);
+          else resolve(this.lastID);
+        }
+      );
+    });
+
+    // Agregar destinos si existen (uno por uno, compatible con Turso)
+    if (destinos && destinos.length > 0) {
+      for (let i = 0; i < destinos.length; i++) {
+        await new Promise((resolve, reject) => {
+          db.run(
+            'INSERT INTO viaje_destinos (viaje_id, destino_id, orden) VALUES (?, ?, ?)',
+            [viajeId, destinos[i], i],
+            (err) => err ? reject(err) : resolve()
+          );
+        });
+      }
     }
 
-    db.run(
-      'INSERT INTO viajes (usuario_id, nombre, icono, fecha_inicio, fecha_fin) VALUES (?, ?, ?, ?, ?)',
-      [req.userId, nombre, icono || '✈️', fecha_inicio, fecha_fin],
-      function(err) {
-        if (err) {
-          return res.status(500).json({ error: 'Error al crear viaje' });
-        }
+    // Agregar participante inicial con datos del usuario de la base de datos
+    const nombreParticipante = usuario?.nombre || 'Usuario';
+    const emailParticipante = usuario?.email || '';
+    const inicialesParticipante = nombreParticipante.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
+    const colorParticipante = '#FF6B6B';
+    
+    await new Promise((resolve, reject) => {
+      db.run(
+        'INSERT INTO participantes (viaje_id, nombre, email, iniciales, color) VALUES (?, ?, ?, ?, ?)',
+        [viajeId, nombreParticipante, emailParticipante, inicialesParticipante, colorParticipante],
+        (err) => err ? reject(err) : resolve()
+      );
+    });
 
-        const viajeId = this.lastID;
-
-        // Agregar destinos si existen
-        if (destinos && destinos.length > 0) {
-          const stmt = db.prepare('INSERT INTO viaje_destinos (viaje_id, destino_id, orden) VALUES (?, ?, ?)');
-          destinos.forEach((destinoId, index) => {
-            stmt.run(viajeId, destinoId, index);
-          });
-          stmt.finalize();
-        }
-
-        // Agregar participante inicial con datos del usuario de la base de datos
-        const nombreParticipante = usuario?.nombre || 'Usuario';
-        const emailParticipante = usuario?.email || '';
-        const inicialesParticipante = nombreParticipante.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2);
-        const colorParticipante = '#FF6B6B';
-        
-        db.run(
-          'INSERT INTO participantes (viaje_id, nombre, email, iniciales, color) VALUES (?, ?, ?, ?, ?)',
-          [viajeId, nombreParticipante, emailParticipante, inicialesParticipante, colorParticipante]
-        );
-
-        res.status(201).json({ message: 'Viaje creado', id: viajeId });
-      }
-    );
-  });
+    res.status(201).json({ message: 'Viaje creado', id: viajeId });
+  } catch (err) {
+    console.error('Error al crear viaje:', err);
+    res.status(500).json({ error: 'Error al crear viaje' });
+  }
 });
 
 // Obtener gastos de un viaje
@@ -1213,6 +1251,208 @@ app.post('/api/viajes/:id/pagos', verificarToken, (req, res) => {
         return res.status(500).json({ error: 'Error al agregar pago' });
       }
       res.status(201).json({ message: 'Pago registrado', id: this.lastID });
+    }
+  );
+});
+
+// ==================== RUTAS DE ITINERARIO DE VIAJES ====================
+
+// Obtener itinerario de un viaje
+app.get('/api/viajes/:id/itinerario', verificarToken, (req, res) => {
+  db.all(
+    'SELECT * FROM viaje_itinerario WHERE viaje_id = ? ORDER BY dia ASC, fecha ASC',
+    [req.params.id],
+    (err, itinerario) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al obtener itinerario' });
+      }
+      res.json(itinerario);
+    }
+  );
+});
+
+// Agregar actividad al itinerario de un viaje
+app.post('/api/viajes/:id/itinerario', verificarToken, (req, res) => {
+  const { fecha, dia, actividad, destino_id, hora, notas } = req.body;
+
+  db.run(
+    'INSERT INTO viaje_itinerario (viaje_id, fecha, dia, actividad, destino_id, hora, notas) VALUES (?, ?, ?, ?, ?, ?, ?)',
+    [req.params.id, fecha, dia, actividad, destino_id, hora, notas],
+    function(err) {
+      if (err) {
+        console.error('Error al agregar itinerario:', err);
+        return res.status(500).json({ error: 'Error al agregar actividad al itinerario' });
+      }
+      res.status(201).json({ message: 'Actividad agregada', id: this.lastID });
+    }
+  );
+});
+
+// Actualizar actividad del itinerario
+app.put('/api/viajes/:viajeId/itinerario/:id', verificarToken, (req, res) => {
+  const { fecha, dia, actividad, hora, notas, completado } = req.body;
+
+  db.run(
+    'UPDATE viaje_itinerario SET fecha = ?, dia = ?, actividad = ?, hora = ?, notas = ?, completado = ? WHERE id = ? AND viaje_id = ?',
+    [fecha, dia, actividad, hora, notas, completado ? 1 : 0, req.params.id, req.params.viajeId],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al actualizar itinerario' });
+      }
+      res.json({ message: 'Itinerario actualizado' });
+    }
+  );
+});
+
+// Eliminar actividad del itinerario
+app.delete('/api/viajes/:viajeId/itinerario/:id', verificarToken, (req, res) => {
+  db.run(
+    'DELETE FROM viaje_itinerario WHERE id = ? AND viaje_id = ?',
+    [req.params.id, req.params.viajeId],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al eliminar actividad' });
+      }
+      res.json({ message: 'Actividad eliminada' });
+    }
+  );
+});
+
+// ==================== RUTAS DE PARTICIPANTES Y RECORDATORIOS ====================
+
+// Obtener un viaje específico por ID
+app.get('/api/viajes/:id', verificarToken, (req, res) => {
+  db.get(
+    'SELECT * FROM viajes WHERE id = ? AND usuario_id = ?',
+    [req.params.id, req.userId],
+    (err, viaje) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al obtener viaje' });
+      }
+      if (!viaje) {
+        return res.status(404).json({ error: 'Viaje no encontrado' });
+      }
+      res.json(viaje);
+    }
+  );
+});
+
+// Actualizar un viaje
+app.put('/api/viajes/:id', verificarToken, (req, res) => {
+  const { nombre, icono, fecha_inicio, fecha_fin, finalizado } = req.body;
+
+  db.run(
+    'UPDATE viajes SET nombre = ?, icono = ?, fecha_inicio = ?, fecha_fin = ?, finalizado = ? WHERE id = ? AND usuario_id = ?',
+    [nombre, icono, fecha_inicio, fecha_fin, finalizado ? 1 : 0, req.params.id, req.userId],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al actualizar viaje' });
+      }
+      res.json({ message: 'Viaje actualizado' });
+    }
+  );
+});
+
+// Obtener participantes de un viaje
+app.get('/api/viajes/:id/participantes', verificarToken, (req, res) => {
+  db.all(
+    'SELECT * FROM participantes WHERE viaje_id = ?',
+    [req.params.id],
+    (err, participantes) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al obtener participantes' });
+      }
+      res.json(participantes);
+    }
+  );
+});
+
+// Agregar participante a un viaje
+app.post('/api/viajes/:id/participantes', verificarToken, (req, res) => {
+  const { nombre, email, iniciales, color } = req.body;
+
+  db.run(
+    'INSERT INTO participantes (viaje_id, nombre, email, iniciales, color) VALUES (?, ?, ?, ?, ?)',
+    [req.params.id, nombre, email, iniciales, color],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al agregar participante' });
+      }
+      res.status(201).json({ message: 'Participante agregado', id: this.lastID });
+    }
+  );
+});
+
+// Eliminar participante
+app.delete('/api/participantes/:id', verificarToken, (req, res) => {
+  db.run(
+    'DELETE FROM participantes WHERE id = ?',
+    [req.params.id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al eliminar participante' });
+      }
+      res.json({ message: 'Participante eliminado' });
+    }
+  );
+});
+
+// Obtener recordatorios de un viaje
+app.get('/api/viajes/:id/recordatorios', verificarToken, (req, res) => {
+  db.all(
+    'SELECT * FROM recordatorios WHERE viaje_id = ? ORDER BY fecha ASC',
+    [req.params.id],
+    (err, recordatorios) => {
+      if (err) {
+        return res.status(500).json({ error: 'Error al obtener recordatorios' });
+      }
+      res.json(recordatorios);
+    }
+  );
+});
+
+// Agregar recordatorio a un viaje
+app.post('/api/viajes/:id/recordatorios', verificarToken, (req, res) => {
+  const { titulo, descripcion, fecha } = req.body;
+
+  db.run(
+    'INSERT INTO recordatorios (viaje_id, titulo, descripcion, fecha) VALUES (?, ?, ?, ?)',
+    [req.params.id, titulo, descripcion, fecha],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al agregar recordatorio' });
+      }
+      res.status(201).json({ message: 'Recordatorio agregado', id: this.lastID });
+    }
+  );
+});
+
+// Actualizar recordatorio
+app.put('/api/recordatorios/:id', verificarToken, (req, res) => {
+  const { titulo, descripcion, fecha, completado } = req.body;
+
+  db.run(
+    'UPDATE recordatorios SET titulo = COALESCE(?, titulo), descripcion = COALESCE(?, descripcion), fecha = COALESCE(?, fecha), completado = COALESCE(?, completado) WHERE id = ?',
+    [titulo, descripcion, fecha, completado ? 1 : 0, req.params.id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al actualizar recordatorio' });
+      }
+      res.json({ message: 'Recordatorio actualizado' });
+    }
+  );
+});
+
+// Eliminar recordatorio
+app.delete('/api/recordatorios/:id', verificarToken, (req, res) => {
+  db.run(
+    'DELETE FROM recordatorios WHERE id = ?',
+    [req.params.id],
+    function(err) {
+      if (err) {
+        return res.status(500).json({ error: 'Error al eliminar recordatorio' });
+      }
+      res.json({ message: 'Recordatorio eliminado' });
     }
   );
 });

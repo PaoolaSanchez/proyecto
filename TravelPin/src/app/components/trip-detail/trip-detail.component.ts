@@ -180,7 +180,7 @@ eliminandoParticipante: boolean = false;
       };
 
       // Verificar si el viaje existe en el backend, si no existe lo creamos
-      this.http.get<any>(`/api/viajes/${this.viajeId}`).subscribe({
+      this.http.get<any>(`${this.apiUrl}/viajes/${this.viajeId}`).subscribe({
         next: (viajeBackend) => {
           // El viaje existe en el backend, proceder normalmente
           console.log('✅ Viaje existe en backend:', viajeBackend);
@@ -223,7 +223,7 @@ eliminandoParticipante: boolean = false;
       usuario_id: usuarioId
     };
 
-    this.http.post<{ id: number }>('/api/viajes', viajeData).subscribe({
+    this.http.post<{ id: number }>(`${this.apiUrl}/viajes`, viajeData).subscribe({
       next: (response) => {
         console.log('✅ Viaje creado en backend con ID:', response.id);
         
@@ -258,9 +258,9 @@ eliminandoParticipante: boolean = false;
     const viajeIdActual = this.viaje?.id || this.viajeId;
 
     // Cargar itinerario, participantes y recordatorios del backend
-    const itinerario$ = this.http.get<any[]>(`/api/viajes/${viajeIdActual}/itinerario`);
-    const participantes$ = this.http.get<any[]>(`/api/viajes/${viajeIdActual}/participantes`);
-    const recordatorios$ = this.http.get<any[]>(`/api/viajes/${viajeIdActual}/recordatorios`);
+    const itinerario$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/itinerario`);
+    const participantes$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/participantes`);
+    const recordatorios$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/recordatorios`);
 
     forkJoin({ itinerario: itinerario$, participantes: participantes$, recordatorios: recordatorios$ }).subscribe({
       next: (result) => {
@@ -407,7 +407,7 @@ eliminandoParticipante: boolean = false;
       localStorage.setItem(this.getStorageKey(), JSON.stringify(colecciones));
       
       // También actualizar en el backend
-      this.http.put(`/api/viajes/${this.viajeId}`, {
+      this.http.put(`${this.apiUrl}/viajes/${this.viajeId}`, {
         nombre: coleccion.nombre,
         fechaInicio: coleccion.fechaInicio,
         fechaFin: coleccion.fechaFin,
@@ -526,7 +526,7 @@ eliminandoParticipante: boolean = false;
     const codigoViaje = `${this.viajeId}-${Date.now().toString(36)}`;
     
     // Crear invitación en el backend
-    this.http.post<any>('/api/invitaciones', { codigo: codigoViaje, viajeId: this.viajeId }).subscribe({
+    this.http.post<any>(`${this.apiUrl}/invitaciones`, { codigo: codigoViaje, viajeId: this.viajeId }).subscribe({
       next: () => {
         // Enviar email con la invitación
         const frontendOrigin = window.location.origin;
@@ -548,7 +548,7 @@ eliminandoParticipante: boolean = false;
         `;
 
         // Llamar al backend de correo
-        fetch('http://localhost:3000/api/email/test-send', {
+        fetch(`${this.apiUrl}/email/test-send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ to: email, subject, html })
@@ -622,7 +622,7 @@ eliminandoParticipante: boolean = false;
     const participante = this.participanteAEliminar;
 
     // Eliminar del backend
-    this.http.delete(`/api/participantes/${participante.id}`).subscribe({
+    this.http.delete(`${this.apiUrl}/participantes/${participante.id}`).subscribe({
       next: () => {
         this.viaje!.participantes = this.viaje!.participantes.filter(p => p.id !== participante.id);
         console.log('Participante eliminado correctamente');
@@ -653,7 +653,7 @@ eliminandoParticipante: boolean = false;
     const confirmar = confirm(`¿Eliminar ${destino.nombre} del itinerario?`);
     if (confirmar) {
       // Eliminar del backend
-      this.http.delete(`/api/viajes/${this.viaje.id}/itinerario/${destino.id}`).subscribe({
+      this.http.delete(`${this.apiUrl}/viajes/${this.viaje.id}/itinerario/${destino.id}`).subscribe({
         next: () => {
           this.viaje!.itinerario = this.viaje!.itinerario.filter(d => d.id !== destino.id);
           
@@ -678,7 +678,7 @@ eliminandoParticipante: boolean = false;
   toggleRecordatorio(recordatorio: Recordatorio): void {
     recordatorio.completado = !recordatorio.completado;
     // Actualizar en el backend
-    this.http.put(`/api/recordatorios/${recordatorio.id}`, { completado: recordatorio.completado }).subscribe({
+    this.http.put(`${this.apiUrl}/recordatorios/${recordatorio.id}`, { completado: recordatorio.completado }).subscribe({
       next: () => console.log('Recordatorio actualizado'),
       error: (err) => console.warn('Error al actualizar recordatorio:', err)
     });
@@ -688,7 +688,7 @@ eliminandoParticipante: boolean = false;
     if (!this.viaje) return;
     
     // Eliminar del backend
-    this.http.delete(`/api/recordatorios/${recordatorio.id}`).subscribe({
+    this.http.delete(`${this.apiUrl}/recordatorios/${recordatorio.id}`).subscribe({
       next: () => {
         this.viaje!.recordatorios = this.viaje!.recordatorios.filter(r => r.id !== recordatorio.id);
         console.log('Recordatorio eliminado');
@@ -734,7 +734,7 @@ agregarRecordatorio(): void {
   };
 
   // Guardar en el backend
-  this.http.post<any>(`/api/viajes/${this.viaje.id}/recordatorios`, payload).subscribe({
+  this.http.post<any>(`${this.apiUrl}/viajes/${this.viaje.id}/recordatorios`, payload).subscribe({
     next: (res) => {
       const nuevoRecordatorio: Recordatorio = {
         id: res.id || Date.now(),
@@ -871,7 +871,7 @@ compartirPorEmail(): void {
     senderName: senderName
   };
 
-  this.http.post<any>('http://localhost:3000/api/viajes/invitar-email', payload).subscribe({
+  this.http.post<any>(`${this.apiUrl}/viajes/invitar-email`, payload).subscribe({
     next: (res) => {
       console.log('Invitación enviada:', res);
       this.mostrarModalCorreoEnviado = true;
@@ -882,33 +882,18 @@ compartirPorEmail(): void {
       }, 2500);
     },
     error: (err) => {
-      console.warn('Backend no disponible, intentando puerto alternativo...');
-      // Intentar con puerto alternativo
-      this.http.post<any>('http://localhost:30001/api/viajes/invitar-email', payload).subscribe({
-        next: (res) => {
-          console.log('Invitación enviada (puerto alternativo):', res);
-          this.mostrarModalCorreoEnviado = true;
-          this.emailInvitacion = '';
-          setTimeout(() => {
-            this.mostrarModalCorreoEnviado = false;
-            this.cerrarModalCompartir();
-          }, 2500);
-        },
-        error: (err2) => {
-          console.error('Error al enviar invitación:', err2);
-          // Fallback: abrir cliente de email
-          const asunto = `Invitación a ${this.viaje?.nombre}`;
-          const cuerpo = `¡Hola! Te invito a unirte a mi viaje "${this.viaje?.nombre}".\n\nHaz clic en este enlace para unirte:\n${this.enlaceInvitacion}\n\n¡Nos vemos pronto!`;
-          const mailtoLink = `mailto:${this.emailInvitacion}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
-          window.location.href = mailtoLink;
-          
-          this.mostrarModalCorreoEnviado = true;
-          setTimeout(() => {
-            this.mostrarModalCorreoEnviado = false;
-            this.cerrarModalCompartir();
-          }, 2500);
-        }
-      });
+      console.error('Error al enviar invitación:', err);
+      // Fallback: abrir cliente de email
+      const asunto = `Invitación a ${this.viaje?.nombre}`;
+      const cuerpo = `¡Hola! Te invito a unirte a mi viaje "${this.viaje?.nombre}".\n\nHaz clic en este enlace para unirte:\n${this.enlaceInvitacion}\n\n¡Nos vemos pronto!`;
+      const mailtoLink = `mailto:${this.emailInvitacion}?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(cuerpo)}`;
+      window.location.href = mailtoLink;
+      
+      this.mostrarModalCorreoEnviado = true;
+      setTimeout(() => {
+        this.mostrarModalCorreoEnviado = false;
+        this.cerrarModalCompartir();
+      }, 2500);
     }
   });
 }

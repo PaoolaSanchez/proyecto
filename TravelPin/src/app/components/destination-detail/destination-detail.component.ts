@@ -355,9 +355,6 @@ export class DestinationDetailComponent implements OnInit {
       alert('Por favor selecciona una fecha de salida');
       return;
     }
-
-    const fechaInicio = this.formatearFecha(this.fechaSalida);
-    const fechaFin = this.calcularFechaFin(this.fechaSalida, this.paqueteSeleccionado.duracion);
     
     // Obtener destinos del paquete o usar el destino actual
     const destinosIds = this.paqueteSeleccionado.destinos && this.paqueteSeleccionado.destinos.length > 0
@@ -372,8 +369,8 @@ export class DestinationDetailComponent implements OnInit {
       nombre: this.paqueteSeleccionado.nombre,
       icono: '✈️',
       destinos: destinosIds,
-      fechaInicio: fechaInicio,
-      fechaFin: fechaFin,
+      fecha_inicio: this.fechaSalida,
+      fecha_fin: this.calcularFechaFinISO(this.fechaSalida, this.paqueteSeleccionado.duracion),
       usuario_id: usuarioId,
       agencia: {
         id: this.paqueteSeleccionado.agencia_id,
@@ -416,6 +413,7 @@ export class DestinationDetailComponent implements OnInit {
           this.paqueteSeleccionado.itinerario.forEach((item) => {
             const itinerarioData = {
               fecha: this.calcularFechaDia(this.fechaSalida, item.dia),
+              dia: item.dia,
               actividad: item.actividades,
               destino_id: destinosIds[0] || null
             };
@@ -431,10 +429,11 @@ export class DestinationDetailComponent implements OnInit {
           for (let persona = 1; persona <= this.numPersonas; persona++) {
             this.paqueteSeleccionado.gastos.forEach((gasto) => {
               const gastoData = {
-                concepto: this.numPersonas > 1 ? `${gasto.concepto} (Persona ${persona})` : gasto.concepto,
+                descripcion: this.numPersonas > 1 ? `${gasto.concepto} (Persona ${persona})` : gasto.concepto,
                 monto: gasto.monto,
-                participante_id: 1,
-                pagado: false
+                categoria: 'paquete',
+                pagado_por: this.nombreCliente,
+                fecha: this.fechaSalida
               };
               this.http.post(`${this.apiUrl}/viajes/${viajeId}/gastos`, gastoData).subscribe({
                 error: (err) => console.error('Error al agregar gasto:', err)
@@ -453,8 +452,8 @@ export class DestinationDetailComponent implements OnInit {
           icono: '✈️',
           destinos: destinosIds,
           fechaCreacion: Date.now(),
-          fechaInicio: fechaInicio,
-          fechaFin: fechaFin,
+          fechaInicio: this.formatearFecha(this.fechaSalida),
+          fechaFin: this.calcularFechaFin(this.fechaSalida, this.paqueteSeleccionado!.duracion),
           finalizado: false,
           agencia: viajeData.agencia
         };
@@ -520,6 +519,13 @@ export class DestinationDetailComponent implements OnInit {
     const fecha = new Date(fechaInicio);
     fecha.setDate(fecha.getDate() + dias);
     return this.formatearFecha(fecha.toISOString());
+  }
+
+  calcularFechaFinISO(fechaInicio: string, duracion: string): string {
+    const dias = parseInt(duracion.split(' ')[0]) || 7;
+    const fecha = new Date(fechaInicio);
+    fecha.setDate(fecha.getDate() + dias);
+    return fecha.toISOString().split('T')[0];
   }
 
   getTotalGastos(gastos: { concepto: string; monto: number }[]): number {
@@ -619,7 +625,7 @@ export class DestinationDetailComponent implements OnInit {
           `;
 
           // Enviar correo a la agencia
-          fetch('http://localhost:3000/api/email/test-send', {
+          fetch(`${this.apiUrl}/email/test-send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ to: agencia.email, subject, html })
