@@ -319,12 +319,12 @@ app.post('/api/admin/seed', async (req, res) => {
     // Datos de seed
     const seedData = {
       destinos: [
-        { id: 1, nombre: 'París', pais: 'Francia', imagen_principal: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200', descripcion: 'La Ciudad de la Luz.' },
-        { id: 29, nombre: 'Cancún', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1510097467424-192d713fd8b2?w=1200', descripcion: 'Paraíso caribeño.' },
-        { id: 30, nombre: 'Riviera Maya', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=1200', descripcion: 'Costa caribeña con cenotes.' },
-        { id: 31, nombre: 'Los Cabos', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1200', descripcion: 'Destino de playa de lujo.' },
-        { id: 32, nombre: 'Puerto Vallarta', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1512813195386-6cf811ad3542?w=1200', descripcion: 'Ciudad costera encantadora.' },
-        { id: 33, nombre: 'Ciudad de México', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1518659526054-190340b32735?w=1200', descripcion: 'Capital vibrante.' }
+        { id: 1, nombre: 'París', pais: 'Francia', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200', descripcion: 'La Ciudad de la Luz.' },
+        { id: 29, nombre: 'Cancún', pais: 'México', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1510097467424-192d713fd8b2?w=1200', descripcion: 'Paraíso caribeño.' },
+        { id: 30, nombre: 'Riviera Maya', pais: 'México', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=1200', descripcion: 'Costa caribeña con cenotes.' },
+        { id: 31, nombre: 'Los Cabos', pais: 'México', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1200', descripcion: 'Destino de playa de lujo.' },
+        { id: 32, nombre: 'Puerto Vallarta', pais: 'México', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1512813195386-6cf811ad3542?w=1200', descripcion: 'Ciudad costera encantadora.' },
+        { id: 33, nombre: 'Ciudad de México', pais: 'México', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1518659526054-190340b32735?w=1200', descripcion: 'Capital vibrante.' }
       ],
       agencias: [
         { id: 16, nombre: 'Viajes Paradiso', logo: '🌴', email: 'paradiso@viajes.com', descripcion: 'Especialistas en viajes de lujo.' },
@@ -352,8 +352,8 @@ app.post('/api/admin/seed', async (req, res) => {
     // Insertar datos
     for (const d of seedData.destinos) {
       await new Promise((resolve, reject) => {
-        db.run('INSERT OR REPLACE INTO destinos (id, nombre, pais, imagen_principal, descripcion) VALUES (?,?,?,?,?)',
-          [d.id, d.nombre, d.pais, d.imagen_principal, d.descripcion], err => err ? reject(err) : resolve());
+        db.run('INSERT OR REPLACE INTO destinos (id, nombre, pais, categoria, imagen_principal, descripcion) VALUES (?,?,?,?,?,?)',
+          [d.id, d.nombre, d.pais, d.categoria, d.imagen_principal, d.descripcion], err => err ? reject(err) : resolve());
       });
     }
 
