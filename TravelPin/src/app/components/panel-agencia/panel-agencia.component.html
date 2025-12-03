@@ -84,7 +84,7 @@
             </div>
 
             <h3>{{ paquete.nombre }}</h3>
-            <p class="precio">${{ paquete.precio | number }}</p>
+            <p class="precio">{{ paquete.precio | currency:'MXN':'symbol-narrow':'1.0-0' }}</p>
             <p class="duracion">⏱️ {{ paquete.duracion }}</p>
             
             <div class="incluye-preview">
@@ -299,7 +299,7 @@
             <div class="gastos-list">
               <div *ngFor="let gasto of nuevoPaquete.gastos; let i = index" class="gasto-item">
                 <span>{{ gasto.concepto }}</span>
-                <span class="monto">${{ gasto.monto | number }}</span>
+                <span class="monto">{{ gasto.monto | currency:'MXN':'symbol-narrow':'1.0-0' }}</span>
                 <button type="button" (click)="eliminarGasto(i)" class="btn-remove">
                   ✕
                 </button>
@@ -307,7 +307,7 @@
               
               <div *ngIf="nuevoPaquete.gastos.length > 0" class="total">
                 <strong>Total de Gastos Incluidos:</strong>
-                <strong class="monto">${{ getTotalGastos() | number }}</strong>
+                <strong class="monto">{{ getTotalGastos() | currency:'MXN':'symbol-narrow':'1.0-0' }}</strong>
               </div>
             </div>
           </div>
