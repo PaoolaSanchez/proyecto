@@ -320,6 +320,11 @@ app.post('/api/admin/seed', async (req, res) => {
     const seedData = {
       destinos: [
         { id: 1, nombre: 'París', pais: 'Francia', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200', descripcion: 'La Ciudad de la Luz.' },
+        { id: 2, nombre: 'Tokio', pais: 'Japón', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=1200', descripcion: 'Metrópoli vibrante.' },
+        { id: 3, nombre: 'Nueva York', pais: 'Estados Unidos', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?w=1200', descripcion: 'La ciudad que nunca duerme.' },
+        { id: 4, nombre: 'Roma', pais: 'Italia', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=1200', descripcion: 'La Ciudad Eterna.' },
+        { id: 5, nombre: 'Barcelona', pais: 'España', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1583422409516-2895a77efded?w=1200', descripcion: 'Ciudad de Gaudí.' },
+        { id: 27, nombre: 'Maldivas', pais: 'Maldivas', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=1200', descripcion: 'Paraíso tropical.' },
         { id: 29, nombre: 'Cancún', pais: 'México', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1510097467424-192d713fd8b2?w=1200', descripcion: 'Paraíso caribeño.' },
         { id: 30, nombre: 'Riviera Maya', pais: 'México', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=1200', descripcion: 'Costa caribeña con cenotes.' },
         { id: 31, nombre: 'Los Cabos', pais: 'México', categoria: 'Playa', imagen_principal: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1200', descripcion: 'Destino de playa de lujo.' },
@@ -329,7 +334,8 @@ app.post('/api/admin/seed', async (req, res) => {
       agencias: [
         { id: 16, nombre: 'Viajes Paradiso', logo: '🌴', email: 'paradiso@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Especialistas en viajes de lujo.' },
         { id: 17, nombre: 'TurMex Adventures', logo: '🦅', email: 'turmex@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Aventuras por México.' },
-        { id: 18, nombre: 'Sol y Playa Tours', logo: '☀️', email: 'solplaya@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Mejores destinos de playa.' }
+        { id: 18, nombre: 'Sol y Playa Tours', logo: '☀️', email: 'solplaya@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Mejores destinos de playa.' },
+        { id: 19, nombre: 'World Explorer', logo: '🌍', email: 'world@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Viajes internacionales de ensueño.' }
       ],
       paquetes: [
         { id: 7, agencia_id: 16, nombre: 'Cancún Premium All-Inclusive', precio: 25000, duracion: '5 días / 4 noches',
@@ -341,11 +347,59 @@ app.post('/api/admin/seed', async (req, res) => {
           incluye: JSON.stringify(['Vuelo redondo', 'Hotel 4 estrellas', 'Tour Tulum']),
           itinerario: JSON.stringify([{dia:1,actividades:'Llegada'},{dia:2,actividades:'Tulum y cenotes'},{dia:3,actividades:'Xcaret'},{dia:4,actividades:'Regreso'}]),
           gastos: JSON.stringify([{concepto:'Vuelo',monto:6000},{concepto:'Hotel',monto:7500},{concepto:'Tours',monto:4500}])
+        },
+        { id: 9, agencia_id: 19, nombre: 'Maldivas Paradise', precio: 85000, duracion: '7 días / 6 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Resort sobre el agua', 'Todo incluido', 'Snorkel', 'Spa']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada a Malé, traslado en lancha al resort'},{dia:2,actividades:'Día de relax en villa sobre el agua'},{dia:3,actividades:'Snorkel con mantarrayas y tiburones'},{dia:4,actividades:'Excursión a isla local'},{dia:5,actividades:'Día de spa y masajes'},{dia:6,actividades:'Pesca al atardecer y cena romántica'},{dia:7,actividades:'Check-out y regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo internacional',monto:35000},{concepto:'Resort 6 noches',monto:42000},{concepto:'Excursiones',monto:5000},{concepto:'Spa',monto:3000}])
+        },
+        { id: 10, agencia_id: 19, nombre: 'París Romántico', precio: 45000, duracion: '6 días / 5 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Hotel 4 estrellas', 'Tour Torre Eiffel', 'Crucero por el Sena', 'Louvre']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada a París, paseo por Champs-Élysées'},{dia:2,actividades:'Torre Eiffel y Arco del Triunfo'},{dia:3,actividades:'Museo del Louvre y Notre Dame'},{dia:4,actividades:'Versalles'},{dia:5,actividades:'Montmartre y crucero por el Sena'},{dia:6,actividades:'Compras y regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:18000},{concepto:'Hotel',monto:20000},{concepto:'Tours',monto:5000},{concepto:'Entradas',monto:2000}])
+        },
+        { id: 11, agencia_id: 19, nombre: 'Tokio Moderno', precio: 55000, duracion: '8 días / 7 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Hotel céntrico', 'JR Pass', 'Tour guiado']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada a Tokio'},{dia:2,actividades:'Shibuya y Harajuku'},{dia:3,actividades:'Templo Senso-ji y Akihabara'},{dia:4,actividades:'Monte Fuji'},{dia:5,actividades:'Kyoto - templos'},{dia:6,actividades:'Kyoto - geishas'},{dia:7,actividades:'Osaka'},{dia:8,actividades:'Regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:25000},{concepto:'Hotel',monto:21000},{concepto:'JR Pass',monto:6000},{concepto:'Tours',monto:3000}])
+        },
+        { id: 12, agencia_id: 18, nombre: 'Nueva York City Break', precio: 38000, duracion: '5 días / 4 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Hotel Manhattan', 'City Pass', 'Tour en bus']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada, Times Square'},{dia:2,actividades:'Estatua de la Libertad y Wall Street'},{dia:3,actividades:'Central Park y museos'},{dia:4,actividades:'Brooklyn y compras'},{dia:5,actividades:'Regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:15000},{concepto:'Hotel',monto:18000},{concepto:'City Pass',monto:3500},{concepto:'Transporte',monto:1500}])
+        },
+        { id: 13, agencia_id: 18, nombre: 'Roma Imperial', precio: 42000, duracion: '6 días / 5 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Hotel céntrico', 'Tour Coliseo', 'Vaticano', 'Pompeya']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada, Fontana di Trevi'},{dia:2,actividades:'Coliseo y Foro Romano'},{dia:3,actividades:'Vaticano y Capilla Sixtina'},{dia:4,actividades:'Excursión a Pompeya'},{dia:5,actividades:'Trastevere y compras'},{dia:6,actividades:'Regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:16000},{concepto:'Hotel',monto:17500},{concepto:'Tours',monto:6000},{concepto:'Entradas',monto:2500}])
+        },
+        { id: 14, agencia_id: 16, nombre: 'Barcelona Gaudí', precio: 35000, duracion: '5 días / 4 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Hotel 4 estrellas', 'Sagrada Familia', 'Park Güell']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada, Las Ramblas'},{dia:2,actividades:'Sagrada Familia y Park Güell'},{dia:3,actividades:'Barrio Gótico y playa'},{dia:4,actividades:'Montjuic y Camp Nou'},{dia:5,actividades:'Regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:14000},{concepto:'Hotel',monto:15000},{concepto:'Tours',monto:4000},{concepto:'Entradas',monto:2000}])
+        },
+        { id: 15, agencia_id: 17, nombre: 'Los Cabos Luxury', precio: 32000, duracion: '5 días / 4 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Resort 5 estrellas', 'Tour al Arco', 'Pesca']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada al resort'},{dia:2,actividades:'Playa y piscina'},{dia:3,actividades:'Tour al Arco y El Médano'},{dia:4,actividades:'Pesca deportiva'},{dia:5,actividades:'Regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:8000},{concepto:'Resort',monto:18000},{concepto:'Tours',monto:4000},{concepto:'Pesca',monto:2000}])
+        },
+        { id: 16, agencia_id: 17, nombre: 'CDMX Cultural', precio: 12000, duracion: '4 días / 3 noches',
+          incluye: JSON.stringify(['Hotel céntrico', 'Tour Teotihuacán', 'Xochimilco', 'Museo Antropología']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada, Zócalo y Centro Histórico'},{dia:2,actividades:'Teotihuacán'},{dia:3,actividades:'Coyoacán y Xochimilco'},{dia:4,actividades:'Museo y regreso'}]),
+          gastos: JSON.stringify([{concepto:'Hotel',monto:6000},{concepto:'Tours',monto:4000},{concepto:'Entradas',monto:1500},{concepto:'Transporte',monto:500}])
         }
       ],
       paquete_destinos: [
-        { paquete_id: 7, destino_id: 29 },
-        { paquete_id: 8, destino_id: 30 }
+        { paquete_id: 7, destino_id: 29 },   // Cancún
+        { paquete_id: 8, destino_id: 30 },   // Riviera Maya
+        { paquete_id: 9, destino_id: 27 },   // Maldivas
+        { paquete_id: 10, destino_id: 1 },   // París
+        { paquete_id: 11, destino_id: 2 },   // Tokio
+        { paquete_id: 12, destino_id: 3 },   // Nueva York
+        { paquete_id: 13, destino_id: 4 },   // Roma
+        { paquete_id: 14, destino_id: 5 },   // Barcelona
+        { paquete_id: 15, destino_id: 31 },  // Los Cabos
+        { paquete_id: 16, destino_id: 33 }   // CDMX
       ]
     };
 
