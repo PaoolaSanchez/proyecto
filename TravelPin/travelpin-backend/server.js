@@ -11,29 +11,20 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_aqui_cambiar_en_produccion';
 
-// Detectar si usar Turso (producción) o SQLite local (desarrollo)
-const USE_TURSO = process.env.TURSO_DATABASE_URL || process.env.RENDER || false;
-let db;
-
-if (USE_TURSO) {
-  console.log('🌐 Usando Turso (base de datos en la nube)');
-  const turso = require('./db-turso');
-  db = turso.db;
-} else {
-  console.log('💾 Usando SQLite local');
-  const sqlite3 = require('sqlite3').verbose();
-  db = new sqlite3.Database('./BDTravelPin.db', (err) => {
-    if (err) {
-      console.error('Error al conectar con la base de datos:', err);
-      process.exit(1);
-    }
-    console.log('✅ Conectado a la base de datos SQLite local');
-  });
-}
+// SQLite - funciona igual en local y en Railway
+const sqlite3 = require('sqlite3').verbose();
+const dbPath = process.env.DATABASE_PATH || './BDTravelPin.db';
+const db = new sqlite3.Database(dbPath, (err) => {
+  if (err) {
+    console.error('Error al conectar con la base de datos:', err);
+    process.exit(1);
+  }
+  console.log('✅ Conectado a la base de datos SQLite:', dbPath);
+});
 
 // Middleware - CORS abierto para producción
 app.use(cors({
-  origin: true, // Permite cualquier origen
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
