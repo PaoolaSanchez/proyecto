@@ -46,10 +46,115 @@
       </div>
     </header>
 
+    <!-- Navegación del Panel -->
+    <nav class="panel-nav">
+      <button 
+        [class.active]="vistaActual === 'paquetes'" 
+        (click)="cambiarVista('paquetes')">
+        📦 Mis Paquetes
+      </button>
+      <button 
+        [class.active]="vistaActual === 'reservas'" 
+        (click)="cambiarVista('reservas')">
+        📋 Reservaciones
+        <span *ngIf="reservasPendientes > 0" class="badge-count">{{ reservasPendientes }}</span>
+      </button>
+    </nav>
+
     <!-- Contenido -->
     <div class="dashboard-content">
+      
+      <!-- ============ SECCIÓN RESERVAS ============ -->
+      <div class="reservas-section" *ngIf="vistaActual === 'reservas' && !mostrarFormulario">
+        <div class="section-header">
+          <h2>📋 Reservaciones de Clientes</h2>
+          <div class="stats-mini">
+            <span class="stat-pendiente">🕐 {{ reservasPendientes }} pendientes</span>
+            <span class="stat-confirmada">✅ {{ reservasConfirmadas }} confirmadas</span>
+          </div>
+        </div>
+
+        <!-- Filtro de estado -->
+        <div class="filtros">
+          <select [(ngModel)]="filtroEstado" class="select-filtro">
+            <option value="">📊 Todos los estados</option>
+            <option value="pendiente">🕐 Pendientes</option>
+            <option value="confirmada">✅ Confirmadas</option>
+            <option value="completada">🎉 Completadas</option>
+            <option value="cancelada">❌ Canceladas</option>
+          </select>
+        </div>
+
+        <!-- Lista de Reservas -->
+        <div class="reservas-grid">
+          <div *ngFor="let reserva of reservasFiltradas" class="reserva-card">
+            <div class="reserva-header">
+              <span class="reserva-estado" [ngClass]="getEstadoClase(reserva.estado)">
+                {{ reserva.estado | titlecase }}
+              </span>
+              <span class="reserva-fecha">{{ formatearFecha(reserva.created_at) }}</span>
+            </div>
+            
+            <h3 class="reserva-paquete">{{ reserva.paquete_nombre }}</h3>
+            
+            <div class="reserva-cliente">
+              <div class="cliente-avatar">{{ reserva.nombre_cliente.charAt(0) }}</div>
+              <div class="cliente-info">
+                <strong>{{ reserva.nombre_cliente }}</strong>
+                <span>{{ reserva.email_cliente }}</span>
+                <span *ngIf="reserva.telefono_cliente">📞 {{ reserva.telefono_cliente }}</span>
+              </div>
+            </div>
+            
+            <div class="reserva-detalles">
+              <div class="detalle-item">
+                <span class="detalle-label">👥 Personas:</span>
+                <span>{{ reserva.num_personas }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="detalle-label">📅 Salida:</span>
+                <span>{{ formatearFecha(reserva.fecha_salida) }}</span>
+              </div>
+              <div class="detalle-item">
+                <span class="detalle-label">💰 Total:</span>
+                <span class="precio-total">${{ reserva.precio_total | number }} MXN</span>
+              </div>
+            </div>
+            
+            <div *ngIf="reserva.notas" class="reserva-notas">
+              <strong>📝 Notas:</strong> {{ reserva.notas }}
+            </div>
+            
+            <div class="reserva-acciones">
+              <button *ngIf="reserva.estado === 'pendiente'" 
+                      class="btn-confirmar"
+                      (click)="actualizarEstadoReserva(reserva.id, 'confirmada')">
+                ✅ Confirmar
+              </button>
+              <button *ngIf="reserva.estado === 'confirmada'" 
+                      class="btn-completar"
+                      (click)="actualizarEstadoReserva(reserva.id, 'completada')">
+                🎉 Completar
+              </button>
+              <button *ngIf="reserva.estado === 'pendiente' || reserva.estado === 'confirmada'" 
+                      class="btn-cancelar"
+                      (click)="actualizarEstadoReserva(reserva.id, 'cancelada')">
+                ❌ Cancelar
+              </button>
+            </div>
+          </div>
+
+          <div *ngIf="reservasFiltradas.length === 0" class="empty-state">
+            <div class="empty-icon">📋</div>
+            <p>No hay reservaciones {{ filtroEstado ? 'con estado ' + filtroEstado : '' }}</p>
+            <p class="empty-subtitle">Las reservas de tus paquetes aparecerán aquí</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ SECCIÓN PAQUETES ============ -->
       <!-- Lista de Paquetes -->
-      <div class="paquetes-section" *ngIf="!mostrarFormulario">
+      <div class="paquetes-section" *ngIf="vistaActual === 'paquetes' && !mostrarFormulario">
         <div class="section-header">
           <h2>📦 Mis Paquetes de Viaje</h2>
           <button (click)="abrirFormulario()" class="btn-primary">

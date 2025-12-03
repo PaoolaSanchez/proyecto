@@ -736,6 +736,78 @@ app.delete('/api/paquetes/:id', (req, res) => {
   });
 });
 
+// ==================== RUTAS DE RESERVAS ====================
+
+// Crear una reserva de paquete
+app.post('/api/reservas', (req, res) => {
+  const { paquete_id, agencia_id, nombre_cliente, email_cliente, telefono_cliente, num_personas, fecha_salida, precio_total, notas } = req.body;
+  
+  if (!paquete_id || !agencia_id || !nombre_cliente || !email_cliente) {
+    return res.status(400).json({ error: 'Faltan campos requeridos' });
+  }
+  
+  db.run(
+    `INSERT INTO reservas (paquete_id, agencia_id, nombre_cliente, email_cliente, telefono_cliente, num_personas, fecha_salida, precio_total, notas, estado)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente')`,
+    [paquete_id, agencia_id, nombre_cliente, email_cliente, telefono_cliente || '', num_personas || 1, fecha_salida || '', precio_total || 0, notas || ''],
+    function(err) {
+      if (err) {
+        console.error('Error al crear reserva:', err);
+        return res.status(500).json({ error: 'Error al crear reserva' });
+      }
+      res.status(201).json({ 
+        success: true, 
+        message: 'Reserva creada exitosamente', 
+        id: this.lastID 
+      });
+    }
+  );
+});
+
+// Obtener reservas de una agencia
+app.get('/api/agencias/:id/reservas', (req, res) => {
+  const agenciaId = req.params.id;
+  
+  db.all(
+    `SELECT r.*, p.nombre as paquete_nombre, p.precio as paquete_precio, p.duracion as paquete_duracion
+     FROM reservas r
+     JOIN paquetes p ON r.paquete_id = p.id
+     WHERE r.agencia_id = ?
+     ORDER BY r.created_at DESC`,
+    [agenciaId],
+    (err, reservas) => {
+      if (err) {
+        console.error('Error al obtener reservas:', err);
+        return res.status(500).json({ error: 'Error al obtener reservas' });
+      }
+      res.json(reservas || []);
+    }
+  );
+});
+
+// Actualizar estado de una reserva
+app.put('/api/reservas/:id/estado', (req, res) => {
+  const reservaId = req.params.id;
+  const { estado } = req.body;
+  
+  const estadosValidos = ['pendiente', 'confirmada', 'cancelada', 'completada'];
+  if (!estadosValidos.includes(estado)) {
+    return res.status(400).json({ error: 'Estado no válido' });
+  }
+  
+  db.run(
+    'UPDATE reservas SET estado = ? WHERE id = ?',
+    [estado, reservaId],
+    function(err) {
+      if (err) {
+        console.error('Error al actualizar reserva:', err);
+        return res.status(500).json({ error: 'Error al actualizar reserva' });
+      }
+      res.json({ message: 'Estado actualizado', estado });
+    }
+  );
+});
+
 // ==================== RUTAS DE DESTINOS ====================
 
 // Endpoint de prueba simple

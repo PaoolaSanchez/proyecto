@@ -8,6 +8,7 @@ import { DestinosService, DestinoCompleto } from '../../services/destinos.servic
 import { finalize } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface Destino {
   id: number;
@@ -86,6 +87,7 @@ export class DestinationDetailComponent implements OnInit {
 
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
+  private apiUrl = environment.apiUrl;
 
   // Datos del formulario de reserva
   nombreCliente: string = '';
@@ -181,7 +183,7 @@ export class DestinationDetailComponent implements OnInit {
   // Cargar paquetes del destino desde el backend
   cargarPaquetesDelDestino(destinoId: number): void {
     this.cargandoPaquetes = true;
-    this.http.get<PaqueteViaje[]>(`/api/destinos/${destinoId}/paquetes`)
+    this.http.get<PaqueteViaje[]>(`${this.apiUrl}/destinos/${destinoId}/paquetes`)
       .subscribe({
         next: (paquetes) => {
           this.paquetes = paquetes;
@@ -387,9 +389,27 @@ export class DestinationDetailComponent implements OnInit {
     };
 
     // Crear viaje en el backend
-    this.http.post<{ id: number }>('/api/viajes', viajeData).subscribe({
+    this.http.post<{ id: number }>(`${this.apiUrl}/viajes`, viajeData).subscribe({
       next: (response) => {
         const viajeId = response.id;
+        
+        // Crear reserva para la agencia
+        const reservaData = {
+          paquete_id: this.paqueteSeleccionado!.id,
+          agencia_id: this.paqueteSeleccionado!.agencia_id,
+          nombre_cliente: this.nombreCliente,
+          email_cliente: this.emailCliente,
+          telefono_cliente: this.telefonoCliente,
+          num_personas: this.numPersonas,
+          fecha_salida: this.fechaSalida,
+          precio_total: this.paqueteSeleccionado!.precio * this.numPersonas,
+          notas: `Viaje ID: ${viajeId} - Destino: ${this.destinoActual?.nombre || ''}`
+        };
+        
+        this.http.post(`${this.apiUrl}/reservas`, reservaData).subscribe({
+          next: () => console.log('✅ Reserva creada para la agencia'),
+          error: (err) => console.error('Error al crear reserva:', err)
+        });
         
         // Agregar itinerario del paquete al viaje
         if (this.paqueteSeleccionado?.itinerario && this.paqueteSeleccionado.itinerario.length > 0) {
@@ -399,7 +419,7 @@ export class DestinationDetailComponent implements OnInit {
               actividad: item.actividades,
               destino_id: destinosIds[0] || null
             };
-            this.http.post(`/api/viajes/${viajeId}/itinerario`, itinerarioData).subscribe({
+            this.http.post(`${this.apiUrl}/viajes/${viajeId}/itinerario`, itinerarioData).subscribe({
               error: (err) => console.error('Error al agregar itinerario:', err)
             });
           });
@@ -416,7 +436,7 @@ export class DestinationDetailComponent implements OnInit {
                 participante_id: 1,
                 pagado: false
               };
-              this.http.post(`/api/viajes/${viajeId}/gastos`, gastoData).subscribe({
+              this.http.post(`${this.apiUrl}/viajes/${viajeId}/gastos`, gastoData).subscribe({
                 error: (err) => console.error('Error al agregar gasto:', err)
               });
             });
@@ -559,7 +579,7 @@ export class DestinationDetailComponent implements OnInit {
     if (!this.paqueteSeleccionado || !this.agenciaSeleccionada) return;
 
     // Obtener email de la agencia
-    this.http.get<any>(`/api/agencias/${this.agenciaSeleccionada.id}`).subscribe({
+    this.http.get<any>(`${this.apiUrl}/agencias/${this.agenciaSeleccionada.id}`).subscribe({
       next: (agencia) => {
         if (agencia.email) {
           const precioTotal = this.paqueteSeleccionado!.precio * this.numPersonas;

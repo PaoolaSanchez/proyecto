@@ -35,6 +35,24 @@ interface Paquete {
   destinosCompletos?: Destino[]; // Datos completos para mostrar
 }
 
+interface Reserva {
+  id: number;
+  paquete_id: number;
+  agencia_id: number;
+  nombre_cliente: string;
+  email_cliente: string;
+  telefono_cliente?: string;
+  num_personas: number;
+  fecha_salida: string;
+  precio_total: number;
+  estado: 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
+  notas?: string;
+  created_at: string;
+  paquete_nombre?: string;
+  paquete_precio?: number;
+  paquete_duracion?: string;
+}
+
 @Component({
   selector: 'app-panel-agencia',
   standalone: true,
@@ -48,11 +66,18 @@ export class PanelAgenciaComponent implements OnInit {
   loginData = { email: '', password: '' };
   agencia: Agencia | null = null;
   
+  // Navegación del panel
+  vistaActual: 'paquetes' | 'reservas' = 'paquetes';
+  
   // Paquetes y Destinos
   paquetes: Paquete[] = [];
   destinosDisponibles: Destino[] = [];
   mostrarFormulario = false;
   editandoPaquete: Paquete | null = null;
+  
+  // Reservas
+  reservas: Reserva[] = [];
+  filtroEstado: string = '';
   
   // Formulario de paquete
   nuevoPaquete: Paquete = {
@@ -96,6 +121,7 @@ export class PanelAgenciaComponent implements OnInit {
       this.agencia = JSON.parse(agenciaGuardada);
       this.loggedIn = true;
       this.cargarPaquetes();
+      this.cargarReservas();
     }
   }
   
@@ -110,6 +136,7 @@ export class PanelAgenciaComponent implements OnInit {
               localStorage.setItem('agencia', JSON.stringify(this.agencia));
             }
             this.cargarPaquetes();
+            this.cargarReservas();
             alert('¡Bienvenido/a!');
           }
         },
@@ -124,10 +151,16 @@ export class PanelAgenciaComponent implements OnInit {
     this.loggedIn = false;
     this.agencia = null;
     this.paquetes = [];
+    this.reservas = [];
     if (this.isBrowser) {
       localStorage.removeItem('agencia');
     }
     this.router.navigate(['/']);
+  }
+  
+  cambiarVista(vista: 'paquetes' | 'reservas') {
+    this.vistaActual = vista;
+    this.mostrarFormulario = false;
   }
   
   cargarDestinos() {
@@ -151,6 +184,9 @@ export class PanelAgenciaComponent implements OnInit {
         next: (paquetes) => {
           this.paquetes = paquetes.map(p => ({
             ...p,
+            incluye: typeof p.incluye === 'string' ? JSON.parse(p.incluye || '[]') : (p.incluye || []),
+            itinerario: typeof p.itinerario === 'string' ? JSON.parse(p.itinerario || '[]') : (p.itinerario || []),
+            gastos: typeof p.gastos === 'string' ? JSON.parse(p.gastos || '[]') : (p.gastos || []),
             destinos: p.destinos?.map((d: any) => d.id) || [],
             destinosCompletos: p.destinos || []
           }));
@@ -159,6 +195,66 @@ export class PanelAgenciaComponent implements OnInit {
           console.error('Error al cargar paquetes:', error);
         }
       });
+  }
+  
+  cargarReservas() {
+    if (!this.agencia) return;
+    
+    this.http.get<Reserva[]>(`${this.apiUrl}/agencias/${this.agencia.id}/reservas`)
+      .subscribe({
+        next: (reservas) => {
+          this.reservas = reservas;
+        },
+        error: (error) => {
+          console.error('Error al cargar reservas:', error);
+        }
+      });
+  }
+  
+  get reservasFiltradas(): Reserva[] {
+    if (!this.filtroEstado) return this.reservas;
+    return this.reservas.filter(r => r.estado === this.filtroEstado);
+  }
+  
+  get reservasPendientes(): number {
+    return this.reservas.filter(r => r.estado === 'pendiente').length;
+  }
+  
+  get reservasConfirmadas(): number {
+    return this.reservas.filter(r => r.estado === 'confirmada').length;
+  }
+  
+  actualizarEstadoReserva(reservaId: number, nuevoEstado: string) {
+    this.http.put(`${this.apiUrl}/reservas/${reservaId}/estado`, { estado: nuevoEstado })
+      .subscribe({
+        next: () => {
+          this.cargarReservas();
+          alert(`✅ Reserva ${nuevoEstado}`);
+        },
+        error: (error) => {
+          alert('❌ Error al actualizar estado');
+          console.error(error);
+        }
+      });
+  }
+  
+  getEstadoClase(estado: string): string {
+    switch (estado) {
+      case 'pendiente': return 'estado-pendiente';
+      case 'confirmada': return 'estado-confirmada';
+      case 'cancelada': return 'estado-cancelada';
+      case 'completada': return 'estado-completada';
+      default: return '';
+    }
+  }
+  
+  formatearFecha(fecha: string): string {
+    if (!fecha) return 'Sin fecha';
+    return new Date(fecha).toLocaleDateString('es-MX', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   }
   
   get paquetesFiltrados() {
