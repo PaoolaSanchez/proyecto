@@ -102,18 +102,26 @@ export class AuthService {
         return this.http.post<any>(this.REGISTER_URL, { nombre, email, password })
             .pipe(
                 tap(response => {
-                    // El backend devuelve { usuario: { id, nombre, email }, token }
-                    const user: User = {
-                        uid: response.usuario.id.toString(),
-                        email: response.usuario.email,
-                        token: response.token
-                    };
-
-                    // Almacenar la sesión localmente (solo en navegador)
-                    if (this.isBrowser) {
-                        localStorage.setItem('currentUser', JSON.stringify(user));
+                    // Si requiere verificación, no hay token aún
+                    if (response.requiresVerification) {
+                        // No hacer login automático, el usuario debe verificar email
+                        return;
                     }
-                    this.userSubject.next(user);
+                    
+                    // Si hay token, hacer login automático
+                    if (response.token && response.usuario) {
+                        const user: User = {
+                            uid: response.usuario.id.toString(),
+                            email: response.usuario.email,
+                            token: response.token
+                        };
+
+                        // Almacenar la sesión localmente (solo en navegador)
+                        if (this.isBrowser) {
+                            localStorage.setItem('currentUser', JSON.stringify(user));
+                        }
+                        this.userSubject.next(user);
+                    }
                 }),
                 catchError(err => {
                     let errorMessage = 'Error al registrar';

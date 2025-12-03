@@ -72,16 +72,22 @@ export class RegisterComponent {
       // Llamar al servicio de registro
       const response = await this.authService.register(this.nombre, this.email, this.password);
 
-      this.successMessage = 'Cuenta creada exitosamente. Redirigiendo...';
-      
-      // Redirigir después de 1.5 segundos
-      setTimeout(() => {
-        if (this.redirectTo) {
-          this.router.navigateByUrl(this.redirectTo);
-        } else {
-          this.router.navigate(['/home']);
-        }
-      }, 1500);
+      // Verificar si requiere verificación de email
+      if (response && response.requiresVerification) {
+        this.successMessage = 'Cuenta creada. Por favor revisa tu correo para verificar tu cuenta.';
+        // No redirigir, el usuario debe verificar email primero
+      } else {
+        this.successMessage = 'Cuenta creada exitosamente. Redirigiendo...';
+        
+        // Redirigir después de 1.5 segundos
+        setTimeout(() => {
+          if (this.redirectTo) {
+            this.router.navigateByUrl(this.redirectTo);
+          } else {
+            this.router.navigate(['/home']);
+          }
+        }, 1500);
+      }
 
     } catch (error: any) {
       console.error('Error durante el registro:', error);
