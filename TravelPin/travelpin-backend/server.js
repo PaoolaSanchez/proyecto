@@ -35,33 +35,28 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    service: 'travelpin-backend',
-    database: USE_TURSO ? 'turso' : 'sqlite-local'
+    service: 'travelpin-backend'
   });
+});
+
+// Health check en español para Railway
+app.get('/api/salud', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Inicializar base de datos y servidor
 inicializarBaseDeDatos(() => {
-  let portActual = PORT;
+  const HOST = '0.0.0.0'; // Necesario para Railway/Docker
   
-  const iniciarServidor = (puerto) => {
-    const server = app.listen(puerto, () => {
-      console.log(`🚀 Servidor corriendo en http://localhost:${puerto}`);
-      console.log(`📊 API disponible en http://localhost:${puerto}/api`);
-    });
-    
-    server.on('error', (err) => {
-      if (err.code === 'EADDRINUSE') {
-        console.warn(`⚠️ Puerto ${puerto} en uso, intentando puerto ${puerto + 1}...`);
-        iniciarServidor(puerto + 1);
-      } else {
-        console.error('Error del servidor:', err);
-        process.exit(1);
-      }
-    });
-  };
+  const server = app.listen(PORT, HOST, () => {
+    console.log(`🚀 Servidor corriendo en http://${HOST}:${PORT}`);
+    console.log(`📊 API disponible en http://${HOST}:${PORT}/api`);
+  });
   
-  iniciarServidor(portActual);
+  server.on('error', (err) => {
+    console.error('Error del servidor:', err);
+    process.exit(1);
+  });
 });
 
 // Función para inicializar las tablas de forma secuencial
