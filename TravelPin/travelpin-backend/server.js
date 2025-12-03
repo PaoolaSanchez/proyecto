@@ -327,9 +327,9 @@ app.post('/api/admin/seed', async (req, res) => {
         { id: 33, nombre: 'Ciudad de México', pais: 'México', categoria: 'Ciudad', imagen_principal: 'https://images.unsplash.com/photo-1518659526054-190340b32735?w=1200', descripcion: 'Capital vibrante.' }
       ],
       agencias: [
-        { id: 16, nombre: 'Viajes Paradiso', logo: '🌴', email: 'paradiso@viajes.com', descripcion: 'Especialistas en viajes de lujo.' },
-        { id: 17, nombre: 'TurMex Adventures', logo: '🦅', email: 'turmex@viajes.com', descripcion: 'Aventuras por México.' },
-        { id: 18, nombre: 'Sol y Playa Tours', logo: '☀️', email: 'solplaya@viajes.com', descripcion: 'Mejores destinos de playa.' }
+        { id: 16, nombre: 'Viajes Paradiso', logo: '🌴', email: 'paradiso@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Especialistas en viajes de lujo.' },
+        { id: 17, nombre: 'TurMex Adventures', logo: '🦅', email: 'turmex@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Aventuras por México.' },
+        { id: 18, nombre: 'Sol y Playa Tours', logo: '☀️', email: 'solplaya@viajes.com', password: '$2b$10$Th76h1Vvqrd3fnM5xPFW7e6LpRQZpjqbaumN60euGOAAEzAP5RcHi', descripcion: 'Mejores destinos de playa.' }
       ],
       paquetes: [
         { id: 7, agencia_id: 16, nombre: 'Cancún Premium All-Inclusive', precio: 25000, duracion: '5 días / 4 noches',
@@ -359,8 +359,8 @@ app.post('/api/admin/seed', async (req, res) => {
 
     for (const a of seedData.agencias) {
       await new Promise((resolve, reject) => {
-        db.run('INSERT OR REPLACE INTO agencias (id, nombre, logo, email, descripcion) VALUES (?,?,?,?,?)',
-          [a.id, a.nombre, a.logo, a.email, a.descripcion], err => err ? reject(err) : resolve());
+        db.run('INSERT OR REPLACE INTO agencias (id, nombre, logo, email, password, descripcion) VALUES (?,?,?,?,?,?)',
+          [a.id, a.nombre, a.logo, a.email, a.password, a.descripcion], err => err ? reject(err) : resolve());
       });
     }
 
