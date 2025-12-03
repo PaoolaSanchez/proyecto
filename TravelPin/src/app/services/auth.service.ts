@@ -76,10 +76,22 @@ export class AuthService {
                     }
                     this.userSubject.next(user);
                 }),
-                // Si la petición falla, debe ser manejada por la vista o un interceptor
+                // Si la petición falla, extraer mensaje de error
                 catchError(err => {
-                    // Reempaquetar el error como observable para que el caller lo capture
-                    return throwError(() => err);
+                    // Extraer mensaje de error del HttpErrorResponse
+                    let errorMessage = 'Error de conexión';
+                    if (err.error) {
+                        if (typeof err.error === 'string') {
+                            errorMessage = err.error;
+                        } else if (err.error.error) {
+                            errorMessage = err.error.error;
+                        } else if (err.error.message) {
+                            errorMessage = err.error.message;
+                        }
+                    } else if (err.message) {
+                        errorMessage = err.message;
+                    }
+                    return throwError(() => new Error(errorMessage));
                 })
             )
             .toPromise() as Promise<void>; 
@@ -103,7 +115,21 @@ export class AuthService {
                     }
                     this.userSubject.next(user);
                 }),
-                catchError(err => throwError(() => err))
+                catchError(err => {
+                    let errorMessage = 'Error al registrar';
+                    if (err.error) {
+                        if (typeof err.error === 'string') {
+                            errorMessage = err.error;
+                        } else if (err.error.error) {
+                            errorMessage = err.error.error;
+                        } else if (err.error.message) {
+                            errorMessage = err.error.message;
+                        }
+                    } else if (err.message) {
+                        errorMessage = err.message;
+                    }
+                    return throwError(() => new Error(errorMessage));
+                })
             )
             .toPromise() as Promise<any>;
     }
