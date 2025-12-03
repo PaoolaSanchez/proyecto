@@ -243,7 +243,14 @@ function inicializarBaseDeDatos(callback) {
   function crearTablaProxima() {
     if (index >= tablas.length) {
       console.log('✨ Todas las tablas creadas correctamente');
-      if (callback) callback();
+      // Ejecutar seed de datos si la BD está vacía
+      const { seedDatabase } = require('./seed-database');
+      seedDatabase().then(() => {
+        if (callback) callback();
+      }).catch(err => {
+        console.error('Error en seed:', err);
+        if (callback) callback();
+      });
       return;
     }
     
