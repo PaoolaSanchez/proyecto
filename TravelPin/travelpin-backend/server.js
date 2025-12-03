@@ -1,7 +1,6 @@
 // server.js
 const express = require('express');
 const cors = require('cors');
-const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const path = require('path');
@@ -11,6 +10,26 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_aqui_cambiar_en_produccion';
+
+// Detectar si usar Turso (producción) o SQLite local (desarrollo)
+const USE_TURSO = process.env.TURSO_DATABASE_URL || process.env.RENDER || false;
+let db;
+
+if (USE_TURSO) {
+  console.log('🌐 Usando Turso (base de datos en la nube)');
+  const turso = require('./db-turso');
+  db = turso.db;
+} else {
+  console.log('💾 Usando SQLite local');
+  const sqlite3 = require('sqlite3').verbose();
+  db = new sqlite3.Database('./BDTravelPin.db', (err) => {
+    if (err) {
+      console.error('Error al conectar con la base de datos:', err);
+      process.exit(1);
+    }
+    console.log('✅ Conectado a la base de datos SQLite local');
+  });
+}
 
 // Middleware - CORS abierto para producción
 app.use(cors({
@@ -25,41 +44,33 @@ app.get('/api/health', (req, res) => {
   res.json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
-    service: 'travelpin-backend'
+    service: 'travelpin-backend',
+    database: USE_TURSO ? 'turso' : 'sqlite-local'
   });
 });
 
-// Conectar a la base de datos SQLite
-const db = new sqlite3.Database('./BDTravelPin.db', (err) => {
-  if (err) {
-    console.error('Error al conectar con la base de datos:', err);
-    process.exit(1);
-  } else {
-    console.log('✅ Conectado a la base de datos SQLite');
-    inicializarBaseDeDatos(() => {
-      // Solo iniciar servidor después de que las tablas estén creadas
-      let portActual = PORT;
-      
-      const iniciarServidor = (puerto) => {
-        const server = app.listen(puerto, () => {
-          console.log(`🚀 Servidor corriendo en http://localhost:${puerto}`);
-          console.log(`📊 API disponible en http://localhost:${puerto}/api`);
-        });
-        
-        server.on('error', (err) => {
-          if (err.code === 'EADDRINUSE') {
-            console.warn(`⚠️ Puerto ${puerto} en uso, intentando puerto ${puerto + 1}...`);
-            iniciarServidor(puerto + 1);
-          } else {
-            console.error('Error del servidor:', err);
-            process.exit(1);
-          }
-        });
-      };
-      
-      iniciarServidor(portActual);
+// Inicializar base de datos y servidor
+inicializarBaseDeDatos(() => {
+  let portActual = PORT;
+  
+  const iniciarServidor = (puerto) => {
+    const server = app.listen(puerto, () => {
+      console.log(`🚀 Servidor corriendo en http://localhost:${puerto}`);
+      console.log(`📊 API disponible en http://localhost:${puerto}/api`);
     });
-  }
+    
+    server.on('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        console.warn(`⚠️ Puerto ${puerto} en uso, intentando puerto ${puerto + 1}...`);
+        iniciarServidor(puerto + 1);
+      } else {
+        console.error('Error del servidor:', err);
+        process.exit(1);
+      }
+    });
+  };
+  
+  iniciarServidor(portActual);
 });
 
 // Función para inicializar las tablas de forma secuencial
