@@ -9,6 +9,7 @@ import { DestinosService, DestinoCompleto } from '../../services/destinos.servic
 import { AuthService } from '../../services/auth.service';
 import { forkJoin, of } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 
 interface Participante {
   id: string;
@@ -75,6 +76,8 @@ export class TripDetailComponent implements OnInit {
   @Output() verDetalleDestino = new EventEmitter<number>();
   @Output() navegarATab = new EventEmitter<string>();
 
+  private apiUrl = environment.apiUrl;
+  
   viaje?: DetalleViaje;
   nuevoAmigo: string = '';
   nuevoAmigoEmail: string = '';

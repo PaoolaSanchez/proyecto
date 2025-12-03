@@ -3,6 +3,7 @@ import { Component, OnInit, Input, Output, EventEmitter, inject, PLATFORM_ID } f
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../../environments/environment';
 
 interface Participante {
   id?: string;
@@ -103,7 +104,7 @@ export class TripExpensesComponent implements OnInit {
     if (!this.viajeId) return;
 
     // Cargar gastos desde el backend
-    this.http.get<any[]>(`/api/viajes/${this.viajeId}/gastos`).subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/viajes/${this.viajeId}/gastos`).subscribe({
       next: (gastosBackend) => {
         console.log('Gastos cargados del backend:', gastosBackend);
         

@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface Coleccion {
   id: number;
@@ -166,7 +167,7 @@ export class TripsComponent implements OnInit, OnDestroy {
     const usuarioId = currentUser?.uid || '';
     
     // Cargar viajes desde el backend filtrados por usuario
-    this.http.get<any[]>(`/api/viajes?usuario_id=${usuarioId}`).subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/viajes?usuario_id=${usuarioId}`).subscribe({
       next: (viajesBackend) => {
         console.log('✅ Viajes cargados del backend:', viajesBackend);
         
@@ -334,7 +335,7 @@ export class TripsComponent implements OnInit, OnDestroy {
       usuario_id: usuarioId
     };
 
-    this.http.post<{ id: number }>('/api/viajes', viajeData).subscribe({
+    this.http.post<{ id: number }>(`${environment.apiUrl}/viajes`, viajeData).subscribe({
       next: (response) => {
         // Usar el ID del backend
         const nuevaColeccion: Coleccion = {
@@ -436,7 +437,7 @@ export class TripsComponent implements OnInit, OnDestroy {
     this.eliminandoViaje = true;
     
     // Eliminar del backend
-    this.http.delete(`/api/viajes/${this.viajeAEliminar.id}`).subscribe({
+    this.http.delete(`${environment.apiUrl}/viajes/${this.viajeAEliminar.id}`).subscribe({
       next: () => {
         console.log('✅ Viaje eliminado del backend:', this.viajeAEliminar?.nombre);
         

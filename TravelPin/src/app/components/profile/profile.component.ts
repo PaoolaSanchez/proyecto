@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 interface Usuario {
   nombre: string;
@@ -28,6 +29,7 @@ export class ProfileComponent implements OnInit, OnChanges {
 
   currentTab: string = 'perfil';
   private isBrowser: boolean;
+  private apiUrl = environment.apiUrl;
   
   usuario: Usuario = {
     nombre: 'Nombre usuario',
@@ -196,7 +198,7 @@ export class ProfileComponent implements OnInit, OnChanges {
     this.mensajeEstado = '';
 
     // Llamar al backend para actualizar el perfil
-    this.http.put<any>(`/api/usuarios/perfil/${encodeURIComponent(this.usuario.email)}`, {
+    this.http.put<any>(`${this.apiUrl}/usuarios/perfil/${encodeURIComponent(this.usuario.email)}`, {
       nombre: this.nombreTemporal.trim(),
       nuevoEmail: this.emailTemporal.trim()
     }).subscribe({
@@ -248,7 +250,7 @@ export class ProfileComponent implements OnInit, OnChanges {
     this.mensajeEstado = '';
 
     // Llamar al backend para cambiar la contraseña
-    this.http.put<any>(`/api/usuarios/cambiar-password/${encodeURIComponent(this.usuario.email)}`, {
+    this.http.put<any>(`${this.apiUrl}/usuarios/cambiar-password/${encodeURIComponent(this.usuario.email)}`, {
       currentPassword: this.passwordActual,
       newPassword: this.passwordNueva
     }).subscribe({

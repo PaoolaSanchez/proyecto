@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { environment } from '../../../environments/environment';
 
 interface Agencia {
   id: number;
@@ -75,6 +76,7 @@ export class PanelAgenciaComponent implements OnInit {
 
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
+  private apiUrl = environment.apiUrl;
   
   constructor(
     private http: HttpClient,
@@ -98,7 +100,7 @@ export class PanelAgenciaComponent implements OnInit {
   }
   
   login() {
-    this.http.post<any>('/api/agencias/login', this.loginData)
+    this.http.post<any>(`${this.apiUrl}/agencias/login`, this.loginData)
       .subscribe({
         next: (response) => {
           if (response.success) {
@@ -129,7 +131,7 @@ export class PanelAgenciaComponent implements OnInit {
   }
   
   cargarDestinos() {
-    this.http.get<any>('/api/destinos')
+    this.http.get<any>(`${this.apiUrl}/destinos`)
       .subscribe({
         next: (response) => {
           // El endpoint devuelve {success, count, data}
@@ -144,7 +146,7 @@ export class PanelAgenciaComponent implements OnInit {
   cargarPaquetes() {
     if (!this.agencia) return;
     
-    this.http.get<any[]>(`/api/agencias/${this.agencia.id}/paquetes`)
+    this.http.get<any[]>(`${this.apiUrl}/agencias/${this.agencia.id}/paquetes`)
       .subscribe({
         next: (paquetes) => {
           this.paquetes = paquetes.map(p => ({
@@ -276,7 +278,7 @@ export class PanelAgenciaComponent implements OnInit {
     
     if (this.editandoPaquete && this.editandoPaquete.id) {
       // Actualizar
-      this.http.put(`/api/paquetes/${this.editandoPaquete.id}`, this.nuevoPaquete)
+      this.http.put(`${this.apiUrl}/paquetes/${this.editandoPaquete.id}`, this.nuevoPaquete)
         .subscribe({
           next: () => {
             alert('✅ Paquete actualizado exitosamente');
@@ -290,7 +292,7 @@ export class PanelAgenciaComponent implements OnInit {
         });
     } else {
       // Crear
-      this.http.post(`/api/agencias/${this.agencia.id}/paquetes`, this.nuevoPaquete)
+      this.http.post(`${this.apiUrl}/agencias/${this.agencia.id}/paquetes`, this.nuevoPaquete)
         .subscribe({
           next: () => {
             alert('✅ Paquete creado exitosamente');
@@ -309,7 +311,7 @@ export class PanelAgenciaComponent implements OnInit {
     if (!id) return;
     
     if (confirm('¿Estás seguro de eliminar este paquete? Esta acción no se puede deshacer.')) {
-      this.http.delete(`/api/paquetes/${id}`)
+      this.http.delete(`${this.apiUrl}/paquetes/${id}`)
         .subscribe({
           next: () => {
             alert('✅ Paquete eliminado');

@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-verify-email',
@@ -179,7 +180,7 @@ export class VerifyEmailComponent implements OnInit {
     if (!this.isBrowser) return;
     
     // Llamar al endpoint de verificación del backend que ahora devuelve credenciales
-    const url = `http://localhost:3000/api/verify-email-and-login?token=${encodeURIComponent(token)}`;
+    const url = `${environment.apiUrl}/verify-email-and-login?token=${encodeURIComponent(token)}`;
     
     this.http.get<any>(url).subscribe({
       next: (response) => {
