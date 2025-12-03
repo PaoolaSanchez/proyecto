@@ -12,9 +12,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_aqui_cambiar_en_produccion';
 
-// Middleware
+// Middleware - CORS abierto para producción
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*',
+  origin: true, // Permite cualquier origen
   credentials: true
 }));
 app.use(express.json());
