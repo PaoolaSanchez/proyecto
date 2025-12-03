@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, PLATFORM_ID } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
@@ -291,6 +291,30 @@ export class JoinTripComponent implements OnInit {
     private authService: AuthService
   ) {}
 
+  // Helper para obtener headers de autenticación
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    if (!this.isBrowser) {
+      return { headers: new HttpHeaders() };
+    }
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (currentUserStr) {
+        const currentUser = JSON.parse(currentUserStr);
+        if (currentUser && currentUser.token) {
+          return {
+            headers: new HttpHeaders({
+              'Authorization': `Bearer ${currentUser.token}`,
+              'Content-Type': 'application/json'
+            })
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Error al leer token:', e);
+    }
+    return { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) };
+  }
+
   ngOnInit(): void {
     this.codigoInvitacion = this.route.snapshot.params['codigo'];
     
@@ -328,7 +352,7 @@ export class JoinTripComponent implements OnInit {
   }
 
   private obtenerInfoViaje(): void {
-    this.http.get<any>(`/api/invitaciones/${this.codigoInvitacion}`).subscribe({
+    this.http.get<any>(`/api/invitaciones/${this.codigoInvitacion}`, this.getAuthHeaders()).subscribe({
       next: (response) => {
         if (response && response.viaje) {
           this.nombreViaje = response.viaje.nombre || 'Viaje';
@@ -360,7 +384,7 @@ export class JoinTripComponent implements OnInit {
     }
 
     // Primero intentar validar desde el backend
-    this.http.get<any>(`/api/invitaciones/${this.codigoInvitacion}`).subscribe({
+    this.http.get<any>(`/api/invitaciones/${this.codigoInvitacion}`, this.getAuthHeaders()).subscribe({
       next: (response) => {
         if (response && response.invitacion && response.invitacion.viaje_id) {
           this.viajeId = response.invitacion.viaje_id;
@@ -475,7 +499,7 @@ export class JoinTripComponent implements OnInit {
     this.cargando = true;
     this.mensaje = 'Uniéndote al viaje...';
 
-    this.http.post<any>(`/api/viajes/${this.viajeId}/participantes`, participanteData).subscribe({
+    this.http.post<any>(`/api/viajes/${this.viajeId}/participantes`, participanteData, this.getAuthHeaders()).subscribe({
       next: (res) => {
         this.cargando = false;
         this.yaUnido = true;
@@ -550,7 +574,7 @@ export class JoinTripComponent implements OnInit {
       
       // Intentar obtener el nombre real desde la base de datos
       if (user.uid && this.isBrowser) {
-        this.http.get<any>(`/api/usuarios/${user.uid}`).subscribe({
+        this.http.get<any>(`/api/usuarios/${user.uid}`, this.getAuthHeaders()).subscribe({
           next: (usuario) => {
             if (usuario && usuario.nombre) {
               this.nombreUsuarioActual = usuario.nombre;
