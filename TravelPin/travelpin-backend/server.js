@@ -299,6 +299,100 @@ function verificarToken(req, res, next) {
   });
 }
 
+// ==================== ENDPOINT DE SEED (para inicializar datos) ====================
+app.post('/api/admin/seed', async (req, res) => {
+  const { force } = req.body;
+  
+  try {
+    // Verificar si hay destinos
+    const count = await new Promise((resolve, reject) => {
+      db.get('SELECT COUNT(*) as count FROM destinos', (err, row) => {
+        if (err) reject(err);
+        else resolve(row?.count || 0);
+      });
+    });
+
+    if (count > 0 && !force) {
+      return res.json({ message: `Ya hay ${count} destinos en la BD. Usa force:true para reinicializar.`, count });
+    }
+
+    // Datos de seed
+    const seedData = {
+      destinos: [
+        { id: 1, nombre: 'París', pais: 'Francia', imagen_principal: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=1200', descripcion: 'La Ciudad de la Luz.' },
+        { id: 29, nombre: 'Cancún', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1510097467424-192d713fd8b2?w=1200', descripcion: 'Paraíso caribeño.' },
+        { id: 30, nombre: 'Riviera Maya', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1552074284-5e88ef1aef18?w=1200', descripcion: 'Costa caribeña con cenotes.' },
+        { id: 31, nombre: 'Los Cabos', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1519046904884-53103b34b206?w=1200', descripcion: 'Destino de playa de lujo.' },
+        { id: 32, nombre: 'Puerto Vallarta', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1512813195386-6cf811ad3542?w=1200', descripcion: 'Ciudad costera encantadora.' },
+        { id: 33, nombre: 'Ciudad de México', pais: 'México', imagen_principal: 'https://images.unsplash.com/photo-1518659526054-190340b32735?w=1200', descripcion: 'Capital vibrante.' }
+      ],
+      agencias: [
+        { id: 16, nombre: 'Viajes Paradiso', logo: '🌴', email: 'paradiso@viajes.com', descripcion: 'Especialistas en viajes de lujo.' },
+        { id: 17, nombre: 'TurMex Adventures', logo: '🦅', email: 'turmex@viajes.com', descripcion: 'Aventuras por México.' },
+        { id: 18, nombre: 'Sol y Playa Tours', logo: '☀️', email: 'solplaya@viajes.com', descripcion: 'Mejores destinos de playa.' }
+      ],
+      paquetes: [
+        { id: 7, agencia_id: 16, nombre: 'Cancún Premium All-Inclusive', precio: 25000, duracion: '5 días / 4 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Hotel 5 estrellas', 'Todo incluido', 'Tour Chichén Itzá']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada y check-in'},{dia:2,actividades:'Playa y actividades'},{dia:3,actividades:'Chichén Itzá'},{dia:4,actividades:'Snorkel'},{dia:5,actividades:'Check-out'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:8000},{concepto:'Hotel',monto:12000},{concepto:'Tours',monto:5000}])
+        },
+        { id: 8, agencia_id: 17, nombre: 'Aventura Riviera Maya', precio: 18000, duracion: '4 días / 3 noches',
+          incluye: JSON.stringify(['Vuelo redondo', 'Hotel 4 estrellas', 'Tour Tulum']),
+          itinerario: JSON.stringify([{dia:1,actividades:'Llegada'},{dia:2,actividades:'Tulum y cenotes'},{dia:3,actividades:'Xcaret'},{dia:4,actividades:'Regreso'}]),
+          gastos: JSON.stringify([{concepto:'Vuelo',monto:6000},{concepto:'Hotel',monto:7500},{concepto:'Tours',monto:4500}])
+        }
+      ],
+      paquete_destinos: [
+        { paquete_id: 7, destino_id: 29 },
+        { paquete_id: 8, destino_id: 30 }
+      ]
+    };
+
+    // Insertar datos
+    for (const d of seedData.destinos) {
+      await new Promise((resolve, reject) => {
+        db.run('INSERT OR REPLACE INTO destinos (id, nombre, pais, imagen_principal, descripcion) VALUES (?,?,?,?,?)',
+          [d.id, d.nombre, d.pais, d.imagen_principal, d.descripcion], err => err ? reject(err) : resolve());
+      });
+    }
+
+    for (const a of seedData.agencias) {
+      await new Promise((resolve, reject) => {
+        db.run('INSERT OR REPLACE INTO agencias (id, nombre, logo, email, descripcion) VALUES (?,?,?,?,?)',
+          [a.id, a.nombre, a.logo, a.email, a.descripcion], err => err ? reject(err) : resolve());
+      });
+    }
+
+    for (const p of seedData.paquetes) {
+      await new Promise((resolve, reject) => {
+        db.run('INSERT OR REPLACE INTO paquetes (id, agencia_id, nombre, precio, duracion, incluye, itinerario, gastos) VALUES (?,?,?,?,?,?,?,?)',
+          [p.id, p.agencia_id, p.nombre, p.precio, p.duracion, p.incluye, p.itinerario, p.gastos], err => err ? reject(err) : resolve());
+      });
+    }
+
+    for (const pd of seedData.paquete_destinos) {
+      await new Promise((resolve, reject) => {
+        db.run('INSERT OR IGNORE INTO paquete_destinos (paquete_id, destino_id) VALUES (?,?)',
+          [pd.paquete_id, pd.destino_id], err => err ? reject(err) : resolve());
+      });
+    }
+
+    res.json({ 
+      success: true, 
+      message: 'Seed ejecutado correctamente',
+      inserted: {
+        destinos: seedData.destinos.length,
+        agencias: seedData.agencias.length,
+        paquetes: seedData.paquetes.length
+      }
+    });
+  } catch (error) {
+    console.error('Error en seed:', error);
+    res.status(500).json({ error: 'Error al ejecutar seed', details: error.message });
+  }
+});
+
 // ==================== RUTAS DE AUTENTICACIÓN ====================
 
 // Registro de usuario (SIN verificación de email - acceso directo)
