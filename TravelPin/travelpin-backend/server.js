@@ -890,6 +890,77 @@ app.get('/api/destinos/featured/populares', (req, res) => {
   });
 });
 
+// Obtener paquetes de un destino específico
+app.get('/api/destinos/:id/paquetes', (req, res) => {
+  const destinoId = req.params.id;
+  console.log(`📦 GET /api/destinos/${destinoId}/paquetes`);
+  
+  // Obtener paquetes que incluyen este destino
+  db.all(`
+    SELECT p.*, a.nombre as agencia_nombre, a.logo as agencia_logo, a.descripcion as agencia_descripcion
+    FROM paquetes p
+    JOIN paquete_destinos pd ON p.id = pd.paquete_id
+    JOIN agencias a ON p.agencia_id = a.id
+    WHERE pd.destino_id = ?
+    ORDER BY p.precio ASC
+  `, [destinoId], (err, paquetes) => {
+    if (err) {
+      console.error('Error al obtener paquetes del destino:', err);
+      return res.status(500).json({ error: 'Error al obtener paquetes' });
+    }
+    
+    // Parsear campos JSON y obtener destinos de cada paquete
+    const paquetesConDestinos = paquetes.map(p => {
+      let incluye = [];
+      let itinerario = [];
+      let gastos = [];
+      
+      try { incluye = typeof p.incluye === 'string' ? JSON.parse(p.incluye || '[]') : (p.incluye || []); } catch(e) {}
+      try { itinerario = typeof p.itinerario === 'string' ? JSON.parse(p.itinerario || '[]') : (p.itinerario || []); } catch(e) {}
+      try { gastos = typeof p.gastos === 'string' ? JSON.parse(p.gastos || '[]') : (p.gastos || []); } catch(e) {}
+      
+      return {
+        ...p,
+        incluye,
+        itinerario,
+        gastos,
+        destinos: [] // Se llenará después
+      };
+    });
+    
+    // Obtener destinos para cada paquete
+    if (paquetesConDestinos.length === 0) {
+      return res.json([]);
+    }
+    
+    const paqueteIds = paquetesConDestinos.map(p => p.id);
+    const placeholders = paqueteIds.map(() => '?').join(',');
+    
+    db.all(`
+      SELECT pd.paquete_id, d.id, d.nombre, d.pais, d.imagen_principal
+      FROM paquete_destinos pd
+      JOIN destinos d ON pd.destino_id = d.id
+      WHERE pd.paquete_id IN (${placeholders})
+      ORDER BY pd.orden
+    `, paqueteIds, (err2, destinosPaquetes) => {
+      if (err2) {
+        console.error('Error al obtener destinos de paquetes:', err2);
+        return res.json(paquetesConDestinos);
+      }
+      
+      // Asignar destinos a cada paquete
+      paquetesConDestinos.forEach(paquete => {
+        paquete.destinos = destinosPaquetes
+          .filter(d => d.paquete_id === paquete.id)
+          .map(d => ({ id: d.id, nombre: d.nombre, pais: d.pais, imagen_principal: d.imagen_principal }));
+      });
+      
+      console.log(`✅ Paquetes encontrados para destino ${destinoId}:`, paquetesConDestinos.length);
+      res.json(paquetesConDestinos);
+    });
+  });
+});
+
 // ==================== RUTAS DE FAVORITOS ====================
 
 // Obtener favoritos (compatible con ambas rutas)
