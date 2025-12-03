@@ -272,9 +272,9 @@ function verificarToken(req, res, next) {
 
 // ==================== RUTAS DE AUTENTICACIÓN ====================
 
-// Registro de usuario (con envío de email de verificación)
+// Registro de usuario (SIN verificación de email - acceso directo)
 app.post('/api/auth/register', async (req, res) => {
-  const { nombre, email, password, skipEmailVerification } = req.body;
+  const { nombre, email, password } = req.body;
 
   if (!nombre || !email || !password) {
     return res.status(400).json({ error: 'Todos los campos son requeridos' });
@@ -283,13 +283,10 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // En desarrollo: verificación automática, En producción: requiere verificación por email
-    const emailVerified = skipEmailVerification === true ? 1 : 0;
-
     db.run(
       'INSERT INTO usuarios (nombre, email, password, email_verified) VALUES (?, ?, ?, ?)',
-      [nombre, email, hashedPassword, emailVerified],
-      async function(err) {
+      [nombre, email, hashedPassword, 1], // email_verified = 1 (verificado automáticamente)
+      function(err) {
         if (err) {
           if (err.message.includes('UNIQUE constraint failed')) {
             return res.status(400).json({ error: 'El email ya está registrado' });
@@ -299,34 +296,7 @@ app.post('/api/auth/register', async (req, res) => {
 
         const userId = this.lastID;
 
-        // Si la verificación no es automática, enviar email
-        if (emailVerified === 0) {
-          const verificationToken = jwt.sign({ email }, JWT_SECRET, { expiresIn: '1h' });
-          const expiresAt = Date.now() + 1000 * 60 * 60; // 1 hora
-
-          db.run('INSERT INTO email_verifications (usuario_id, email, token, expires_at) VALUES (?, ?, ?, ?)',
-            [userId, email, verificationToken, expiresAt], async (err2) => {
-              if (!err2) {
-                const frontend = process.env.FRONTEND_URL || `http://localhost:4200`;
-                const verificationLink = `${frontend}/verify-email?token=${verificationToken}`;
-
-                try {
-                  await emailService.sendVerificationEmail(email, verificationLink, nombre);
-                } catch (emailError) {
-                  console.error('Error al enviar email de verificación:', emailError);
-                }
-              }
-            }
-          );
-
-          return res.status(201).json({
-            message: 'Usuario registrado. Por favor verifica tu correo electrónico.',
-            requiresVerification: true,
-            usuario: { id: userId, nombre, email }
-          });
-        }
-
-        // Si la verificación es automática, devolver token de sesión
+        // Devolver token directamente sin requerir verificación
         const token = jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '7d' });
         
         res.status(201).json({
@@ -364,11 +334,7 @@ app.post('/api/auth/login', (req, res) => {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    // Revisar verificación de email
-    if (usuario.email_verified === 0 || usuario.email_verified === null) {
-      return res.status(403).json({ error: 'email_not_verified', message: 'Email no verificado' });
-    }
-
+    // Sin verificación de email requerida
     const token = jwt.sign({ id: usuario.id }, JWT_SECRET, { expiresIn: '7d' });
 
     res.json({
