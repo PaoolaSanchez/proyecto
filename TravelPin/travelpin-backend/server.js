@@ -634,13 +634,35 @@ app.post('/api/agencias/:id/paquetes', (req, res) => {
     'INSERT INTO paquetes (agencia_id, nombre, precio, duracion, incluye, itinerario, gastos) VALUES (?, ?, ?, ?, ?, ?, ?)',
     [agenciaId, nombre, precio, duracion || '', incluyeJSON, itinJSON, gastosJSON],
     function(err) {
-      if (err) return res.status(500).json({ error: 'Error al crear paquete' });
+      if (err) {
+        console.error('Error al crear paquete:', err);
+        return res.status(500).json({ error: 'Error al crear paquete' });
+      }
       const paqueteId = this.lastID;
 
       if (Array.isArray(destinos) && destinos.length > 0) {
-        const stmt = db.prepare('INSERT INTO paquete_destinos (paquete_id, destino_id, orden) VALUES (?, ?, ?)');
-        destinos.forEach((destId, idx) => stmt.run(paqueteId, destId, idx));
-        stmt.finalize(() => res.status(201).json({ message: 'Paquete creado', id: paqueteId }));
+        // Insertar destinos uno por uno con db.run en lugar de prepare
+        let inserted = 0;
+        let hasError = false;
+        
+        destinos.forEach((destId, idx) => {
+          if (hasError) return;
+          db.run(
+            'INSERT INTO paquete_destinos (paquete_id, destino_id, orden) VALUES (?, ?, ?)',
+            [paqueteId, destId, idx],
+            (err2) => {
+              if (err2 && !hasError) {
+                hasError = true;
+                console.error('Error al insertar destino:', err2);
+                return res.status(500).json({ error: 'Error al asociar destinos' });
+              }
+              inserted++;
+              if (inserted === destinos.length && !hasError) {
+                res.status(201).json({ message: 'Paquete creado', id: paqueteId });
+              }
+            }
+          );
+        });
       } else {
         res.status(201).json({ message: 'Paquete creado', id: paqueteId });
       }
@@ -661,14 +683,39 @@ app.put('/api/paquetes/:id', (req, res) => {
     'UPDATE paquetes SET nombre = ?, precio = ?, duracion = ?, incluye = ?, itinerario = ?, gastos = ?, created_at = CURRENT_TIMESTAMP WHERE id = ?',
     [nombre, precio, duracion || '', incluyeJSON, itinJSON, gastosJSON, paqueteId],
     function(err) {
-      if (err) return res.status(500).json({ error: 'Error al actualizar paquete' });
+      if (err) {
+        console.error('Error al actualizar paquete:', err);
+        return res.status(500).json({ error: 'Error al actualizar paquete' });
+      }
       // actualizar destinos: eliminar existentes y volver a insertar
       db.run('DELETE FROM paquete_destinos WHERE paquete_id = ?', [paqueteId], (err2) => {
-        if (err2) return res.status(500).json({ error: 'Error al actualizar destinos del paquete' });
+        if (err2) {
+          console.error('Error al eliminar destinos:', err2);
+          return res.status(500).json({ error: 'Error al actualizar destinos del paquete' });
+        }
         if (Array.isArray(destinos) && destinos.length > 0) {
-          const stmt = db.prepare('INSERT INTO paquete_destinos (paquete_id, destino_id, orden) VALUES (?, ?, ?)');
-          destinos.forEach((destId, idx) => stmt.run(paqueteId, destId, idx));
-          stmt.finalize(() => res.json({ message: 'Paquete actualizado' }));
+          // Insertar destinos uno por uno con db.run
+          let inserted = 0;
+          let hasError = false;
+          
+          destinos.forEach((destId, idx) => {
+            if (hasError) return;
+            db.run(
+              'INSERT INTO paquete_destinos (paquete_id, destino_id, orden) VALUES (?, ?, ?)',
+              [paqueteId, destId, idx],
+              (err3) => {
+                if (err3 && !hasError) {
+                  hasError = true;
+                  console.error('Error al insertar destino:', err3);
+                  return res.status(500).json({ error: 'Error al asociar destinos' });
+                }
+                inserted++;
+                if (inserted === destinos.length && !hasError) {
+                  res.json({ message: 'Paquete actualizado' });
+                }
+              }
+            );
+          });
         } else {
           res.json({ message: 'Paquete actualizado' });
         }
