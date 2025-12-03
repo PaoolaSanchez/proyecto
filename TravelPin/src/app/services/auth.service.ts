@@ -5,6 +5,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { HttpClient } from '@angular/common/http'; 
 import { Observable, BehaviorSubject, of, throwError } from 'rxjs'; 
 import { map, catchError, tap } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 // Definición de tipos simplificados, ya no necesitamos los de Firebase
 export type User = { uid: string; email: string; token: string; };
@@ -13,7 +14,7 @@ export type User = { uid: string; email: string; token: string; };
 export class AuthService {
     
     // 🚨 URL de tu endpoint de login en el servidor Node.js
-    private readonly API_URL_BASE = '/api';
+    private readonly API_URL_BASE = environment.apiUrl;
     private readonly LOGIN_URL = `${this.API_URL_BASE}/auth/login`; // Usar /api/auth/login en el backend
     private readonly REGISTER_URL = `${this.API_URL_BASE}/auth/register`; // Registro de usuario
     

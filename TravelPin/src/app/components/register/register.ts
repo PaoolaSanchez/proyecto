@@ -85,7 +85,17 @@ export class RegisterComponent {
 
     } catch (error: any) {
       console.error('Error durante el registro:', error);
-      this.errorMessage = error.error?.error || 'Error al registrar. Intenta de nuevo.';
+      if (typeof error === 'string') {
+        this.errorMessage = error;
+      } else if (error.error?.error) {
+        this.errorMessage = error.error.error;
+      } else if (error.error?.message) {
+        this.errorMessage = error.error.message;
+      } else if (error.message) {
+        this.errorMessage = error.message;
+      } else {
+        this.errorMessage = 'Error al registrar. Intenta de nuevo.';
+      }
     } finally {
       this.isLoading = false;
     }

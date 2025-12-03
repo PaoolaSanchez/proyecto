@@ -1,16 +1,6 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
+  "buildCommand": "ng build",
   "outputDirectory": "dist/TravelPin/browser",
-  "installCommand": "npm install",
-  "framework": "angular",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "${BACKEND_URL}/api/:path*"
-    }
-  ],
-  "env": {
-    "BACKEND_URL": "@backend_url"
-  }
+  "installCommand": "npm install"
 }

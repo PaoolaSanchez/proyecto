@@ -58,3 +58,5 @@ Thumbs.db
 
 # Backups locales
 /travelpin-backend/backups/
+.vercel
+.env*.local

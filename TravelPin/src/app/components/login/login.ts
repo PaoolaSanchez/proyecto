@@ -90,7 +90,17 @@ export class LoginComponent {
       console.error('Error durante el login:', error);
       
       // El servidor devuelve { error: 'email_not_verified' } o { error: 'Credenciales inválidas' }
-      this.errorMessage = error.error?.error || error.error?.message || 'Error de conexión. Inténtalo más tarde.';
+      if (typeof error === 'string') {
+        this.errorMessage = error;
+      } else if (error.error?.error) {
+        this.errorMessage = error.error.error;
+      } else if (error.error?.message) {
+        this.errorMessage = error.error.message;
+      } else if (error.message) {
+        this.errorMessage = error.message;
+      } else {
+        this.errorMessage = 'Error de conexión. Inténtalo más tarde.';
+      }
 
       // Si el servidor indica que el email no ha sido verificado, mostrar opción
       if (error.error?.error === 'email_not_verified') {
