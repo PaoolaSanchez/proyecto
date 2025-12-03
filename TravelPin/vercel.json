@@ -2,5 +2,16 @@
   "version": 2,
   "buildCommand": "ng build",
   "outputDirectory": "dist/TravelPin/browser",
-  "installCommand": "npm install"
+  "installCommand": "npm install",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0"
+        }
+      ]
+    }
+  ]
 }
