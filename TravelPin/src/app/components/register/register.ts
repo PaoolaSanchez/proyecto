@@ -85,17 +85,21 @@ export class RegisterComponent {
 
     } catch (error: any) {
       console.error('Error durante el registro:', error);
+      
+      // Extraer mensaje de error de diferentes formatos posibles
+      let errorMsg = 'Error al registrar. Intenta de nuevo.';
+      
       if (typeof error === 'string') {
-        this.errorMessage = error;
-      } else if (error.error?.error) {
-        this.errorMessage = error.error.error;
-      } else if (error.error?.message) {
-        this.errorMessage = error.error.message;
+        errorMsg = error;
+      } else if (typeof error.error === 'string') {
+        errorMsg = error.error;
+      } else if (typeof error.error === 'object' && error.error !== null) {
+        errorMsg = error.error.error || error.error.message || JSON.stringify(error.error);
       } else if (error.message) {
-        this.errorMessage = error.message;
-      } else {
-        this.errorMessage = 'Error al registrar. Intenta de nuevo.';
+        errorMsg = error.message;
       }
+      
+      this.errorMessage = errorMsg;
     } finally {
       this.isLoading = false;
     }

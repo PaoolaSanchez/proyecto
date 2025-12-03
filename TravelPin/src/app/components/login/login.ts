@@ -89,21 +89,23 @@ export class LoginComponent {
       // 5. Manejar errores del servidor (ej. 401 Credenciales inválidas)
       console.error('Error durante el login:', error);
       
-      // El servidor devuelve { error: 'email_not_verified' } o { error: 'Credenciales inválidas' }
+      // Extraer mensaje de error de diferentes formatos posibles
+      let errorMsg = 'Error de conexión. Inténtalo más tarde.';
+      
       if (typeof error === 'string') {
-        this.errorMessage = error;
-      } else if (error.error?.error) {
-        this.errorMessage = error.error.error;
-      } else if (error.error?.message) {
-        this.errorMessage = error.error.message;
+        errorMsg = error;
+      } else if (typeof error.error === 'string') {
+        errorMsg = error.error;
+      } else if (typeof error.error === 'object' && error.error !== null) {
+        errorMsg = error.error.error || error.error.message || JSON.stringify(error.error);
       } else if (error.message) {
-        this.errorMessage = error.message;
-      } else {
-        this.errorMessage = 'Error de conexión. Inténtalo más tarde.';
+        errorMsg = error.message;
       }
+      
+      this.errorMessage = errorMsg;
 
       // Si el servidor indica que el email no ha sido verificado, mostrar opción
-      if (error.error?.error === 'email_not_verified') {
+      if (error.error?.error === 'email_not_verified' || errorMsg.includes('email_not_verified')) {
         this.showVerify = true;
       }
     }
