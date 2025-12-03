@@ -1,7 +1,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { CollectionsModalComponent } from '../collections-modal/collections-modal.component';
 import { AuthWarningModalComponent } from '../auth-warning-modal/auth-warning-modal.component';
 import { DestinosService, DestinoCompleto } from '../../services/destinos.service';
@@ -107,6 +107,30 @@ export class DestinationDetailComponent implements OnInit {
     private router: Router,
     private http: HttpClient
   ) {}
+
+  // Helper para obtener headers de autenticación
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    if (!this.isBrowser) {
+      return { headers: new HttpHeaders() };
+    }
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (currentUserStr) {
+        const currentUser = JSON.parse(currentUserStr);
+        if (currentUser && currentUser.token) {
+          return {
+            headers: new HttpHeaders({
+              'Authorization': `Bearer ${currentUser.token}`,
+              'Content-Type': 'application/json'
+            })
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Error al leer token:', e);
+    }
+    return { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) };
+  }
 
   private getStorageKey(): string {
     const user = this.authService.getCurrentUser();
@@ -386,7 +410,7 @@ export class DestinationDetailComponent implements OnInit {
     };
 
     // Crear viaje en el backend
-    this.http.post<{ id: number }>(`${this.apiUrl}/viajes`, viajeData).subscribe({
+    this.http.post<{ id: number }>(`${this.apiUrl}/viajes`, viajeData, this.getAuthHeaders()).subscribe({
       next: (response) => {
         const viajeId = response.id;
         
@@ -403,7 +427,7 @@ export class DestinationDetailComponent implements OnInit {
           notas: `Viaje ID: ${viajeId} - Destino: ${this.destinoActual?.nombre || ''}`
         };
         
-        this.http.post(`${this.apiUrl}/reservas`, reservaData).subscribe({
+        this.http.post(`${this.apiUrl}/reservas`, reservaData, this.getAuthHeaders()).subscribe({
           next: () => console.log('✅ Reserva creada para la agencia'),
           error: (err) => console.error('Error al crear reserva:', err)
         });
@@ -417,7 +441,7 @@ export class DestinationDetailComponent implements OnInit {
               actividad: item.actividades,
               destino_id: destinosIds[0] || null
             };
-            this.http.post(`${this.apiUrl}/viajes/${viajeId}/itinerario`, itinerarioData).subscribe({
+            this.http.post(`${this.apiUrl}/viajes/${viajeId}/itinerario`, itinerarioData, this.getAuthHeaders()).subscribe({
               error: (err) => console.error('Error al agregar itinerario:', err)
             });
           });
@@ -435,7 +459,7 @@ export class DestinationDetailComponent implements OnInit {
                 pagado_por: this.nombreCliente,
                 fecha: this.fechaSalida
               };
-              this.http.post(`${this.apiUrl}/viajes/${viajeId}/gastos`, gastoData).subscribe({
+              this.http.post(`${this.apiUrl}/viajes/${viajeId}/gastos`, gastoData, this.getAuthHeaders()).subscribe({
                 error: (err) => console.error('Error al agregar gasto:', err)
               });
             });
@@ -585,7 +609,7 @@ export class DestinationDetailComponent implements OnInit {
     if (!this.paqueteSeleccionado || !this.agenciaSeleccionada) return;
 
     // Obtener email de la agencia
-    this.http.get<any>(`${this.apiUrl}/agencias/${this.agenciaSeleccionada.id}`).subscribe({
+    this.http.get<any>(`${this.apiUrl}/agencias/${this.agenciaSeleccionada.id}`, this.getAuthHeaders()).subscribe({
       next: (agencia) => {
         if (agencia.email) {
           const precioTotal = this.paqueteSeleccionado!.precio * this.numPersonas;

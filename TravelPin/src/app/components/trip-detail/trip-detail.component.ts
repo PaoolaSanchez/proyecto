@@ -1,8 +1,8 @@
 //trip-detail.component.ts
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Input, Output, EventEmitter, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule, HttpHeaders } from '@angular/common/http';
 import { TripExpensesComponent } from '../trip-expenses/trip-expenses.component';
 import { TripMapComponent } from '../trip-map/trip-map.component';
 import { DestinosService, DestinoCompleto } from '../../services/destinos.service';
@@ -130,11 +130,37 @@ mostrarModalEliminarParticipante: boolean = false;
 participanteAEliminar: Participante | null = null;
 eliminandoParticipante: boolean = false;
 
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
 
   // Nota: ahora cargamos destinos desde el backend via DestinosService
   destinosDB: DestinoCompleto[] = [];
 
   constructor(private destinosService: DestinosService, private authService: AuthService, private http: HttpClient) {}
+
+  // Helper para obtener headers de autenticación
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    if (!this.isBrowser) {
+      return { headers: new HttpHeaders() };
+    }
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (currentUserStr) {
+        const currentUser = JSON.parse(currentUserStr);
+        if (currentUser && currentUser.token) {
+          return {
+            headers: new HttpHeaders({
+              'Authorization': `Bearer ${currentUser.token}`,
+              'Content-Type': 'application/json'
+            })
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Error al leer token:', e);
+    }
+    return { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) };
+  }
 
   private getStorageKey(): string {
     const user = this.authService.getCurrentUser();
@@ -180,7 +206,7 @@ eliminandoParticipante: boolean = false;
       };
 
       // Verificar si el viaje existe en el backend, si no existe lo creamos
-      this.http.get<any>(`${this.apiUrl}/viajes/${this.viajeId}`).subscribe({
+      this.http.get<any>(`${this.apiUrl}/viajes/${this.viajeId}`, this.getAuthHeaders()).subscribe({
         next: (viajeBackend) => {
           // El viaje existe en el backend, proceder normalmente
           console.log('✅ Viaje existe en backend:', viajeBackend);
@@ -223,7 +249,7 @@ eliminandoParticipante: boolean = false;
       usuario_id: usuarioId
     };
 
-    this.http.post<{ id: number }>(`${this.apiUrl}/viajes`, viajeData).subscribe({
+    this.http.post<{ id: number }>(`${this.apiUrl}/viajes`, viajeData, this.getAuthHeaders()).subscribe({
       next: (response) => {
         console.log('✅ Viaje creado en backend con ID:', response.id);
         
@@ -256,11 +282,12 @@ eliminandoParticipante: boolean = false;
   private cargarDatosViaje(coleccion: Coleccion): void {
     // Usar el ID correcto (puede haber sido actualizado)
     const viajeIdActual = this.viaje?.id || this.viajeId;
+    const headers = this.getAuthHeaders();
 
     // Cargar itinerario, participantes y recordatorios del backend
-    const itinerario$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/itinerario`);
-    const participantes$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/participantes`);
-    const recordatorios$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/recordatorios`);
+    const itinerario$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/itinerario`, headers);
+    const participantes$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/participantes`, headers);
+    const recordatorios$ = this.http.get<any[]>(`${this.apiUrl}/viajes/${viajeIdActual}/recordatorios`, headers);
 
     forkJoin({ itinerario: itinerario$, participantes: participantes$, recordatorios: recordatorios$ }).subscribe({
       next: (result) => {
@@ -412,7 +439,7 @@ eliminandoParticipante: boolean = false;
         fechaInicio: coleccion.fechaInicio,
         fechaFin: coleccion.fechaFin,
         finalizado: true
-      }).subscribe({
+      }, this.getAuthHeaders()).subscribe({
         next: () => console.log('Viaje actualizado en backend'),
         error: (err) => console.warn('Error al actualizar viaje en backend:', err)
       });
@@ -526,7 +553,7 @@ eliminandoParticipante: boolean = false;
     const codigoViaje = `${this.viajeId}-${Date.now().toString(36)}`;
     
     // Crear invitación en el backend
-    this.http.post<any>(`${this.apiUrl}/invitaciones`, { codigo: codigoViaje, viajeId: this.viajeId }).subscribe({
+    this.http.post<any>(`${this.apiUrl}/invitaciones`, { codigo: codigoViaje, viajeId: this.viajeId }, this.getAuthHeaders()).subscribe({
       next: () => {
         // Enviar email con la invitación
         const frontendOrigin = window.location.origin;
@@ -622,7 +649,7 @@ eliminandoParticipante: boolean = false;
     const participante = this.participanteAEliminar;
 
     // Eliminar del backend
-    this.http.delete(`${this.apiUrl}/participantes/${participante.id}`).subscribe({
+    this.http.delete(`${this.apiUrl}/participantes/${participante.id}`, this.getAuthHeaders()).subscribe({
       next: () => {
         this.viaje!.participantes = this.viaje!.participantes.filter(p => p.id !== participante.id);
         console.log('Participante eliminado correctamente');
@@ -653,7 +680,7 @@ eliminandoParticipante: boolean = false;
     const confirmar = confirm(`¿Eliminar ${destino.nombre} del itinerario?`);
     if (confirmar) {
       // Eliminar del backend
-      this.http.delete(`${this.apiUrl}/viajes/${this.viaje.id}/itinerario/${destino.id}`).subscribe({
+      this.http.delete(`${this.apiUrl}/viajes/${this.viaje.id}/itinerario/${destino.id}`, this.getAuthHeaders()).subscribe({
         next: () => {
           this.viaje!.itinerario = this.viaje!.itinerario.filter(d => d.id !== destino.id);
           
@@ -678,7 +705,7 @@ eliminandoParticipante: boolean = false;
   toggleRecordatorio(recordatorio: Recordatorio): void {
     recordatorio.completado = !recordatorio.completado;
     // Actualizar en el backend
-    this.http.put(`${this.apiUrl}/recordatorios/${recordatorio.id}`, { completado: recordatorio.completado }).subscribe({
+    this.http.put(`${this.apiUrl}/recordatorios/${recordatorio.id}`, { completado: recordatorio.completado }, this.getAuthHeaders()).subscribe({
       next: () => console.log('Recordatorio actualizado'),
       error: (err) => console.warn('Error al actualizar recordatorio:', err)
     });
@@ -688,7 +715,7 @@ eliminandoParticipante: boolean = false;
     if (!this.viaje) return;
     
     // Eliminar del backend
-    this.http.delete(`${this.apiUrl}/recordatorios/${recordatorio.id}`).subscribe({
+    this.http.delete(`${this.apiUrl}/recordatorios/${recordatorio.id}`, this.getAuthHeaders()).subscribe({
       next: () => {
         this.viaje!.recordatorios = this.viaje!.recordatorios.filter(r => r.id !== recordatorio.id);
         console.log('Recordatorio eliminado');
@@ -734,7 +761,7 @@ agregarRecordatorio(): void {
   };
 
   // Guardar en el backend
-  this.http.post<any>(`${this.apiUrl}/viajes/${this.viaje.id}/recordatorios`, payload).subscribe({
+  this.http.post<any>(`${this.apiUrl}/viajes/${this.viaje.id}/recordatorios`, payload, this.getAuthHeaders()).subscribe({
     next: (res) => {
       const nuevoRecordatorio: Recordatorio = {
         id: res.id || Date.now(),
@@ -871,7 +898,7 @@ compartirPorEmail(): void {
     senderName: senderName
   };
 
-  this.http.post<any>(`${this.apiUrl}/viajes/invitar-email`, payload).subscribe({
+  this.http.post<any>(`${this.apiUrl}/viajes/invitar-email`, payload, this.getAuthHeaders()).subscribe({
     next: (res) => {
       console.log('Invitación enviada:', res);
       this.mostrarModalCorreoEnviado = true;

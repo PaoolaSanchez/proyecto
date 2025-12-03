@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
 import { AuthService } from '../../services/auth.service';
+import { AuthHeadersService } from '../../services/auth-headers.service';
 import { environment } from '../../../environments/environment';
 
 interface Coleccion {
@@ -52,6 +53,7 @@ export class TripsComponent implements OnInit, OnDestroy {
   private http = inject(HttpClient);
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
+  private authHeaders = inject(AuthHeadersService);
 
   currentTab: string = 'viajes';
   viajes: Viaje[] = [];
@@ -166,8 +168,8 @@ export class TripsComponent implements OnInit, OnDestroy {
     const currentUser = this.authService.getCurrentUser();
     const usuarioId = currentUser?.uid || '';
     
-    // Cargar viajes desde el backend filtrados por usuario
-    this.http.get<any[]>(`${environment.apiUrl}/viajes?usuario_id=${usuarioId}`).subscribe({
+    // Cargar viajes desde el backend filtrados por usuario (con headers de auth)
+    this.http.get<any[]>(`${environment.apiUrl}/viajes?usuario_id=${usuarioId}`, this.authHeaders.getAuthHeaders()).subscribe({
       next: (viajesBackend) => {
         console.log('✅ Viajes cargados del backend:', viajesBackend);
         
@@ -335,7 +337,7 @@ export class TripsComponent implements OnInit, OnDestroy {
       usuario_id: usuarioId
     };
 
-    this.http.post<{ id: number }>(`${environment.apiUrl}/viajes`, viajeData).subscribe({
+    this.http.post<{ id: number }>(`${environment.apiUrl}/viajes`, viajeData, this.authHeaders.getAuthHeaders()).subscribe({
       next: (response) => {
         // Usar el ID del backend
         const nuevaColeccion: Coleccion = {
@@ -437,7 +439,7 @@ export class TripsComponent implements OnInit, OnDestroy {
     this.eliminandoViaje = true;
     
     // Eliminar del backend
-    this.http.delete(`${environment.apiUrl}/viajes/${this.viajeAEliminar.id}`).subscribe({
+    this.http.delete(`${environment.apiUrl}/viajes/${this.viajeAEliminar.id}`, this.authHeaders.getAuthHeaders()).subscribe({
       next: () => {
         console.log('✅ Viaje eliminado del backend:', this.viajeAEliminar?.nombre);
         

@@ -2,7 +2,7 @@
 import { Component, OnInit, Input, Output, EventEmitter, inject, PLATFORM_ID } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { environment } from '../../../environments/environment';
 
 interface Participante {
@@ -63,6 +63,30 @@ export class TripExpensesComponent implements OnInit {
   private platformId = inject(PLATFORM_ID);
   private isBrowser = isPlatformBrowser(this.platformId);
 
+  // Helper para obtener headers de autenticación
+  private getAuthHeaders(): { headers: HttpHeaders } {
+    if (!this.isBrowser) {
+      return { headers: new HttpHeaders() };
+    }
+    try {
+      const currentUserStr = localStorage.getItem('currentUser');
+      if (currentUserStr) {
+        const currentUser = JSON.parse(currentUserStr);
+        if (currentUser && currentUser.token) {
+          return {
+            headers: new HttpHeaders({
+              'Authorization': `Bearer ${currentUser.token}`,
+              'Content-Type': 'application/json'
+            })
+          };
+        }
+      }
+    } catch (e) {
+      console.error('Error al leer token:', e);
+    }
+    return { headers: new HttpHeaders({ 'Content-Type': 'application/json' }) };
+  }
+
   mostrarModalGasto: boolean = false;
   mostrarModalPago: boolean = false;
   participanteSeleccionadoPago?: Participante;
@@ -104,7 +128,7 @@ export class TripExpensesComponent implements OnInit {
     if (!this.viajeId) return;
 
     // Cargar gastos desde el backend
-    this.http.get<any[]>(`${environment.apiUrl}/viajes/${this.viajeId}/gastos`).subscribe({
+    this.http.get<any[]>(`${environment.apiUrl}/viajes/${this.viajeId}/gastos`, this.getAuthHeaders()).subscribe({
       next: (gastosBackend) => {
         console.log('Gastos cargados del backend:', gastosBackend);
         
