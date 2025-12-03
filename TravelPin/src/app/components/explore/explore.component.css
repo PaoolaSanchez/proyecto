@@ -1,6 +1,6 @@
 /* Container */
 .explore-container {
-  max-width: 428px;
+  max-width: 100%;
   margin: 0 auto;
   background-color: #ffffff;
   min-height: 100vh;
@@ -107,6 +107,8 @@
 /* Main Content */
 .explore-content {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* Section Header */
@@ -152,8 +154,8 @@
 
 .categories-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
 }
 
 .category-card {
@@ -499,12 +501,44 @@
 .result-category {
   display: inline-block;
   padding: 4px 12px;
-  background: #EDF2F7;
-  color: #4A5568;
   border-radius: 12px;
   font-size: 11px;
   font-weight: 600;
   align-self: flex-start;
+  color: white;
+}
+
+/* Colores por categoría */
+.result-category.category-playa {
+  background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+}
+
+.result-category.category-ciudad {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.result-category.category-cultural {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.result-category.category-aventura {
+  background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+}
+
+.result-category.category-naturaleza {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.result-category.category-lujo {
+  background: linear-gradient(135deg, #ba8b02 0%, #f5c432 100%);
+}
+
+.result-category.category-montana {
+  background: linear-gradient(135deg, #8e9eab 0%, #557c93 100%);
+}
+
+.result-category.category-default {
+  background: #607D8B;
 }
 
 /* No Results */
@@ -670,19 +704,64 @@
 }
 
 /* Responsive para pantallas pequeñas */
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .featured-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
   }
   
   .featured-image {
+    height: 130px;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Responsive para tablets */
+@media (min-width: 768px) {
+  .explore-content {
+    padding: 30px 40px;
+  }
+
+  .section-title {
+    font-size: 32px;
+  }
+
+  .featured-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+  }
+
+  .featured-image {
+    height: 180px;
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
+  }
+
+  .category-card {
     height: 160px;
   }
 }
 
-/* Responsive para pantallas medianas */
-@media (min-width: 381px) and (max-width: 600px) {
+/* Responsive para desktop */
+@media (min-width: 1200px) {
+  .featured-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .categories-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .category-card {
+    height: 180px;
+  }
+
   .featured-image {
-    height: 130px;
+    height: 200px;
   }
 }

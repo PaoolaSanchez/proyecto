@@ -1,6 +1,8 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+//trip-expenses.component.ts
+import { Component, OnInit, Input, Output, EventEmitter, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
 
 interface Participante {
   id?: string;
@@ -19,6 +21,7 @@ interface Gasto {
   pagadoPor: string;
   fecha: string;
   dividirEntre: string[];
+  esAgencia?: boolean;
 }
 
 interface Pago {
@@ -53,6 +56,11 @@ export class TripExpensesComponent implements OnInit {
   @Input() nombreViaje?: string;
   @Input() participantes: Participante[] = [];
   @Output() volver = new EventEmitter<void>();
+  @Output() navegarATab = new EventEmitter<string>();
+
+  private http = inject(HttpClient);
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
 
   mostrarModalGasto: boolean = false;
   mostrarModalPago: boolean = false;
@@ -89,39 +97,77 @@ export class TripExpensesComponent implements OnInit {
     
     this.cargarGastos();
     this.cargarPagos();
-    this.calcularResumenCategorias();
   }
 
   cargarGastos(): void {
     if (!this.viajeId) return;
 
-    // Primero, intentar cargar los gastos programados de la agencia
+    // Cargar gastos desde el backend
+    this.http.get<any[]>(`/api/viajes/${this.viajeId}/gastos`).subscribe({
+      next: (gastosBackend) => {
+        console.log('Gastos cargados del backend:', gastosBackend);
+        
+        // Convertir formato del backend al formato del componente
+        this.gastos = gastosBackend.map(g => ({
+          id: g.id,
+          descripcion: g.descripcion,
+          monto: g.monto,
+          categoria: this.mapearCategoria(g.categoria),
+          pagadoPor: g.pagadoPor || g.pagado_por || 'Usuario',
+          fecha: g.fecha,
+          dividirEntre: this.participantes.map(p => p.email || p.nombre),
+          esAgencia: g.esAgencia || g.es_agencia || false
+        }));
+        
+        this.calcularResumenCategorias();
+      },
+      error: (error) => {
+        console.error('Error al cargar gastos del backend:', error);
+        // Fallback: cargar desde localStorage si el backend falla
+        this.cargarGastosDesdeLocalStorage();
+      }
+    });
+  }
+
+  private mapearCategoria(categoria: string): string {
+    const mapping: { [key: string]: string } = {
+      'general': 'Otros',
+      'transporte': 'Transporte',
+      'hospedaje': 'Hospedaje',
+      'comida': 'Alimentos',
+      'actividades': 'Entretenimiento',
+      'otros': 'Otros'
+    };
+    return mapping[categoria?.toLowerCase()] || categoria || 'Otros';
+  }
+
+  private cargarGastosDesdeLocalStorage(): void {
+    if (!this.isBrowser || !this.viajeId) return;
+    
+    // Intentar cargar gastos programados de agencia desde localStorage
     const gastosAgencia = this.cargarGastosProgramadosDeAgencia();
     
-    // Luego cargar los gastos adicionales guardados por el usuario
     const key = `gastos_viaje_${this.viajeId}`;
     const gastosGuardados = localStorage.getItem(key);
     
     if (gastosAgencia.length > 0) {
-      // Si hay gastos de agencia, agregarlos
       this.gastos = [...gastosAgencia];
-      
-      // Agregar los gastos adicionales del usuario si existen
       if (gastosGuardados) {
         const gastosUsuario: Gasto[] = JSON.parse(gastosGuardados);
-        // Solo agregar gastos del usuario que no sean de agencia
         const gastosUsuarioFiltrados = gastosUsuario.filter(g => !g.descripcion.includes('[Agencia]'));
         this.gastos = [...this.gastos, ...gastosUsuarioFiltrados];
       }
     } else if (gastosGuardados) {
-      // Si no hay gastos de agencia, solo cargar los del usuario
       this.gastos = JSON.parse(gastosGuardados);
     }
-
-    console.log('Gastos cargados para el viaje:', this.viajeId, this.gastos);
+    
+    this.calcularResumenCategorias();
+    console.log('Gastos cargados desde localStorage:', this.gastos);
   }
 
   cargarGastosProgramadosDeAgencia(): Gasto[] {
+    if (!this.isBrowser) return [];
+    
     try {
       const coleccionesData = localStorage.getItem('travelplus_colecciones');
       if (!coleccionesData) return [];
@@ -364,6 +410,10 @@ export class TripExpensesComponent implements OnInit {
     this.volver.emit();
   }
 
+  cambiarTab(tab: string): void {
+    this.navegarATab.emit(tab);
+  }
+
   formatearMonto(monto: number): string {
     return `$${monto.toLocaleString('es-MX')}`;
   }
@@ -396,7 +446,7 @@ export class TripExpensesComponent implements OnInit {
   }
 
   esGastoDeAgencia(gasto: Gasto): boolean {
-    return gasto.descripcion.includes('[Agencia]');
+    return gasto.esAgencia || gasto.descripcion.includes('[Agencia]');
   }
 
   getColorCategoria(categoria: string): string {

@@ -59,7 +59,7 @@
             <p class="item-location">📍 {{ destino.pais }}</p>
             <div class="item-meta">
               <span class="item-rating">⭐ {{ destino.rating }}</span>
-              <span class="item-category">{{ destino.categoria }}</span>
+              <span class="item-category" [ngClass]="getCategoryClass(destino.categoria)">{{ destino.categoria }}</span>
             </div>
           </div>
           <button 

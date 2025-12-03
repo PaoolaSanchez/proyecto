@@ -21,6 +21,7 @@ export class TripMapComponent implements OnInit, AfterViewInit {
   @Input() nombreViaje?: string;
   @Input() destinos: DestinoMapa[] = [];
   @Output() volver = new EventEmitter<void>();
+  @Output() navegarATab = new EventEmitter<string>();
 
   private map: any;
   private markers: any[] = [];
@@ -174,5 +175,9 @@ export class TripMapComponent implements OnInit, AfterViewInit {
 
   volverAtras(): void {
     this.volver.emit();
+  }
+
+  cambiarTab(tab: string): void {
+    this.navegarATab.emit(tab);
   }
 }

@@ -246,4 +246,24 @@
       </div>
     </div>
   </div>
+
+  <!-- Barra de Navegación Inferior -->
+  <nav class="bottom-nav">
+    <button class="nav-item" (click)="cambiarTab('detalles')">
+      <span class="nav-icon">📋</span>
+      <span class="nav-label">Detalles</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTab('mapa')">
+      <span class="nav-icon">🗺️</span>
+      <span class="nav-label">Mapa</span>
+    </button>
+    <button class="nav-item active" (click)="cambiarTab('gastos')">
+      <span class="nav-icon">💰</span>
+      <span class="nav-label">Gastos</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTab('recordatorios')">
+      <span class="nav-icon">🔔</span>
+      <span class="nav-label">Alertas</span>
+    </button>
+  </nav>
 </div>

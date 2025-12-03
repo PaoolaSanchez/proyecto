@@ -60,7 +60,7 @@
           <img [src]="destino.imagen" [alt]="destino.nombre" class="result-image">
           
           <!-- Category Badge -->
-          <div class="result-category-badge">
+          <div class="result-category-badge" [ngClass]="getCategoryClass(destino.categoria)">
             {{ destino.categoria }}
           </div>
           
@@ -118,14 +118,15 @@
 
     <!-- Error State -->
     <div class="error-message" *ngIf="errorIA">
-      <p>⚠️ No pudimos generar recomendaciones personalizadas con IA, pero aquí están tus mejores opciones basadas en tus preferencias.</p>
+      <p>⚠️ {{ errorMensaje || 'No pudimos generar recomendaciones personalizadas con IA, pero aquí están tus mejores opciones basadas en tus preferencias.' }}</p>
+      <button class="btn-retry" (click)="generarRecomendacionesConIA()">Reintentar</button>
     </div>
 
     <!-- Additional Info -->
     <div class="info-section">
       <p class="info-text">¿Estos destinos no son lo que buscas?</p>
-      <button class="btn-refinar">Refinar búsqueda</button>
-      <button class="btn-ver-todos">Ver todos los destinos</button>
+      <button class="btn-refinar" (click)="onRefinarBusqueda()">Refinar búsqueda</button>
+      <button class="btn-ver-todos" (click)="onVerTodosDestinos()">Ver todos los destinos</button>
     </div>
   </main>
 

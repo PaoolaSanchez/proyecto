@@ -267,23 +267,23 @@
 
     <!-- Bottom Navigation -->
     <nav class="bottom-nav">
-      <button class="nav-item">
+      <button class="nav-item" (click)="cambiarTab('inicio')">
         <span class="nav-icon">🏠</span>
         <span class="nav-label">Inicio</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" (click)="cambiarTab('explorar')">
         <span class="nav-icon">🔍</span>
         <span class="nav-label">Explorar</span>
       </button>
-      <button class="nav-item active">
+      <button class="nav-item active" (click)="cambiarTab('viajes')">
         <span class="nav-icon">🧳</span>
         <span class="nav-label">Viajes</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" (click)="cambiarTab('favoritos')">
         <span class="nav-icon">💖</span>
         <span class="nav-label">Favoritos</span>
       </button>
-      <button class="nav-item">
+      <button class="nav-item" (click)="cambiarTab('perfil')">
         <span class="nav-icon">👤</span>
         <span class="nav-label">Perfil</span>
       </button>
@@ -392,13 +392,91 @@
     </div>
   </div>
 
+  <!-- Modal Link Copiado -->
+  <div class="modal-notificacion-overlay" *ngIf="mostrarModalLinkCopiado">
+    <div class="modal-notificacion success">
+      <div class="modal-notificacion-icon">📋</div>
+      <h3 class="modal-notificacion-titulo">¡Enlace copiado!</h3>
+      <p class="modal-notificacion-mensaje">El enlace se ha copiado al portapapeles</p>
+    </div>
+  </div>
+
+  <!-- Modal Correo Enviado -->
+  <div class="modal-notificacion-overlay" *ngIf="mostrarModalCorreoEnviado">
+    <div class="modal-notificacion success">
+      <div class="modal-notificacion-icon">✉️</div>
+      <h3 class="modal-notificacion-titulo">¡Correo enviado!</h3>
+      <p class="modal-notificacion-mensaje">Se abrió tu cliente de email para enviar la invitación</p>
+    </div>
+  </div>
+
+  <!-- Modal Correo Inválido -->
+  <div class="modal-notificacion-overlay" *ngIf="mostrarModalCorreoInvalido" (click)="cerrarModalCorreoInvalido()">
+    <div class="modal-notificacion warning" (click)="$event.stopPropagation()">
+      <div class="modal-notificacion-icon">⚠️</div>
+      <h3 class="modal-notificacion-titulo">Atención</h3>
+      <p class="modal-notificacion-mensaje">{{ mensajeCorreoInvalido }}</p>
+      <button class="btn-modal-notificacion" (click)="cerrarModalCorreoInvalido()">Entendido</button>
+    </div>
+  </div>
+
+  <!-- Modal Confirmar Finalizar Viaje -->
+  <div class="modal-overlay modal-finalizar-overlay" *ngIf="mostrarModalConfirmarFinalizar" (click)="cancelarFinalizar()">
+    <div class="modal-finalizar" (click)="$event.stopPropagation()">
+      <div class="finalizar-icon-container">
+        <span class="finalizar-emoji">🏁</span>
+      </div>
+      <h2 class="finalizar-title">¿Finalizar viaje?</h2>
+      <p class="finalizar-viaje-nombre">{{ viaje.icono }} {{ viaje.nombre }}</p>
+      <p class="finalizar-text">Al marcar el viaje como finalizado, no podrás agregar más destinos, participantes ni recordatorios. Podrás calificar tu experiencia.</p>
+      <div class="finalizar-buttons">
+        <button class="btn-finalizar-cancel" (click)="cancelarFinalizar()" [disabled]="finalizandoViaje">
+          Cancelar
+        </button>
+        <button class="btn-finalizar-confirm" (click)="confirmarFinalizarViaje()" [disabled]="finalizandoViaje">
+          <span *ngIf="!finalizandoViaje">Sí, finalizar</span>
+          <span *ngIf="finalizandoViaje">Finalizando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Viaje Finalizado Exitosamente -->
+  <div class="modal-notificacion-overlay" *ngIf="mostrarModalViajeFinalizadoExito">
+    <div class="modal-notificacion success">
+      <div class="modal-notificacion-icon">✅</div>
+      <h3 class="modal-notificacion-titulo">¡Viaje finalizado!</h3>
+      <p class="modal-notificacion-mensaje">Tu viaje ha sido marcado como finalizado exitosamente</p>
+    </div>
+  </div>
+
+  <!-- Modal Gracias por Calificar -->
+  <div class="modal-notificacion-overlay" *ngIf="mostrarModalGraciasCalificacion">
+    <div class="modal-notificacion success">
+      <div class="modal-notificacion-icon">⭐</div>
+      <h3 class="modal-notificacion-titulo">¡Gracias por calificar!</h3>
+      <p class="modal-notificacion-mensaje">Tu opinión nos ayuda a mejorar</p>
+    </div>
+  </div>
+
+  <!-- Modal Selecciona Calificación -->
+  <div class="modal-notificacion-overlay" *ngIf="mostrarModalSeleccionaCalificacion" (click)="cerrarModalSeleccionaCalificacion()">
+    <div class="modal-notificacion warning" (click)="$event.stopPropagation()">
+      <div class="modal-notificacion-icon">⚠️</div>
+      <h3 class="modal-notificacion-titulo">Atención</h3>
+      <p class="modal-notificacion-mensaje">Por favor selecciona una calificación</p>
+      <button class="btn-modal-notificacion" (click)="cerrarModalSeleccionaCalificacion()">Entendido</button>
+    </div>
+  </div>
+
   <!-- Vista de Gastos -->
   <app-trip-expenses
     *ngIf="mostrarGastos"
     [viajeId]="viajeId"
     [nombreViaje]="viaje.nombre"
     [participantes]="viaje.participantes"
-    (volver)="volverDeGastos()">
+    (volver)="volverDeGastos()"
+    (navegarATab)="cambiarTab($event)">
   </app-trip-expenses>
 
   <!-- Vista de Mapa -->
@@ -406,7 +484,109 @@
     *ngIf="mostrarMapa"
     [nombreViaje]="viaje.nombre"
     [destinos]="viaje.itinerario"
-    (volver)="volverDeMapa()">
+    (volver)="volverDeMapa()"
+    (navegarATab)="cambiarTab($event)">
   </app-trip-map>
+
+  <!-- Modal Agregar Participante -->
+  <div class="modal-overlay" *ngIf="mostrarModalAgregarParticipante">
+    <div class="modal-content modal-agregar-participante">
+      <div class="modal-header">
+        <h3>👥 Agregar Participante</h3>
+        <button class="btn-cerrar-modal" (click)="cerrarModalAgregarParticipante()">✕</button>
+      </div>
+      
+      <div class="modal-body">
+        <p class="modal-descripcion">Ingresa los datos del participante. Se enviará un correo con el enlace de invitación.</p>
+        
+        <div class="form-group">
+          <label class="form-label">Nombre del participante *</label>
+          <input 
+            type="text" 
+            class="form-input"
+            [(ngModel)]="nombreNuevoParticipante"
+            placeholder="Ej: Juan Pérez"
+            [disabled]="enviandoInvitacion">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Correo electrónico *</label>
+          <input 
+            type="email" 
+            class="form-input"
+            [(ngModel)]="emailNuevoParticipante"
+            placeholder="correo@ejemplo.com"
+            [disabled]="enviandoInvitacion">
+        </div>
+
+        <p class="modal-nota">📧 El participante recibirá un correo con un enlace para unirse al viaje</p>
+      </div>
+
+      <div class="modal-actions">
+        <button 
+          class="btn-cancelar" 
+          (click)="cerrarModalAgregarParticipante()"
+          [disabled]="enviandoInvitacion">
+          Cancelar
+        </button>
+        <button 
+          class="btn-enviar-invitacion" 
+          (click)="enviarInvitacionYAgregarParticipante()"
+          [disabled]="enviandoInvitacion || !nombreNuevoParticipante.trim() || !emailNuevoParticipante.trim()">
+          <span *ngIf="!enviandoInvitacion">📨 Enviar Invitación</span>
+          <span *ngIf="enviandoInvitacion">⏳ Enviando...</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Invitación Enviada -->
+  <div class="modal-overlay" *ngIf="mostrarModalInvitacionEnviada">
+    <div class="modal-content modal-success">
+      <div class="modal-icon">✅</div>
+      <h3>¡Invitación Enviada!</h3>
+      <p>El correo de invitación ha sido enviado exitosamente.</p>
+      <p class="modal-nota">El participante aparecerá en la lista cuando acepte la invitación.</p>
+      <div class="modal-actions">
+        <button class="btn-modal-success" (click)="cerrarModalInvitacionEnviada()">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Error Invitación -->
+  <div class="modal-overlay" *ngIf="mostrarModalErrorInvitacion">
+    <div class="modal-content modal-error">
+      <div class="modal-icon">❌</div>
+      <h3>Error al Enviar</h3>
+      <p>{{ mensajeErrorInvitacion }}</p>
+      <div class="modal-actions">
+        <button class="btn-modal-error" (click)="cerrarModalErrorInvitacion()">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmar Eliminar Participante -->
+  <div class="modal-overlay" *ngIf="mostrarModalEliminarParticipante">
+    <div class="modal-content modal-warning">
+      <div class="modal-icon">⚠️</div>
+      <h3>Eliminar Participante</h3>
+      <p>¿Estás seguro de que deseas eliminar a <strong>{{ participanteAEliminar?.nombre }}</strong> del viaje?</p>
+      <p class="modal-nota">Esta acción no se puede deshacer.</p>
+      <div class="modal-actions modal-actions-dual">
+        <button 
+          class="btn-modal-cancel" 
+          (click)="cerrarModalEliminarParticipante()"
+          [disabled]="eliminandoParticipante">
+          Cancelar
+        </button>
+        <button 
+          class="btn-modal-danger" 
+          (click)="confirmarEliminarParticipante()"
+          [disabled]="eliminandoParticipante">
+          {{ eliminandoParticipante ? 'Eliminando...' : '🗑️ Eliminar' }}
+        </button>
+      </div>
+    </div>
+  </div>
 
 </div>

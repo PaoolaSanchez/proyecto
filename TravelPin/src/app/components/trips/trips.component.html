@@ -179,3 +179,24 @@
     </div>
   </div>
 </div>
+
+<!-- Modal Confirmar Eliminar Viaje -->
+<div class="modal-overlay modal-eliminar-overlay" *ngIf="mostrarModalEliminar" (click)="cancelarEliminar()">
+  <div class="modal-eliminar" (click)="$event.stopPropagation()">
+    <div class="eliminar-icon-container">
+      <span class="eliminar-emoji">🗑️</span>
+    </div>
+    <h2 class="eliminar-title">¿Eliminar viaje?</h2>
+    <p class="eliminar-viaje-nombre" *ngIf="viajeAEliminar">{{ viajeAEliminar.icono }} {{ viajeAEliminar.nombre }}</p>
+    <p class="eliminar-text">Esta acción no se puede deshacer. Se eliminarán todos los datos del viaje, incluyendo gastos e itinerario.</p>
+    <div class="eliminar-buttons">
+      <button class="btn-eliminar-cancel" (click)="cancelarEliminar()" [disabled]="eliminandoViaje">
+        Cancelar
+      </button>
+      <button class="btn-eliminar-confirm" (click)="confirmarEliminar()" [disabled]="eliminandoViaje">
+        <span *ngIf="!eliminandoViaje">Sí, eliminar</span>
+        <span *ngIf="eliminandoViaje">Eliminando...</span>
+      </button>
+    </div>
+  </div>
+</div>

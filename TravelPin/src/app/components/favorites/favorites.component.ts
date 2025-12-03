@@ -1,6 +1,8 @@
 
 import { Component, OnInit, Output, EventEmitter, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { DestinosService, DestinoCompleto } from '../../services/destinos.service';
+import { AuthService } from '../../services/auth.service';
 
 interface DestinoFavorito {
   id: number;
@@ -9,7 +11,6 @@ interface DestinoFavorito {
   imagen: string;
   categoria: string;
   rating: number;
-  precio: number;
   fechaAgregado: Date;
 }
 
@@ -28,108 +29,40 @@ export class FavoritesComponent implements OnInit {
   destinosFavoritos: DestinoFavorito[] = [];
   favoritosRecientes: DestinoFavorito[] = [];
   private isBrowser: boolean;
+  todosLosDestinos: DestinoCompleto[] = [];
 
-  // Base de datos completa de destinos
-  todosLosDestinos = [
-    {
-      id: 1,
-      nombre: 'Machu Picchu',
-      pais: 'Perú',
-      imagen: 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=400',
-      categoria: 'Aventura',
-      rating: 4.7,
-      precio: 120
-    },
-    {
-      id: 2,
-      nombre: 'Tokio',
-      pais: 'Japón',
-      imagen: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=400',
-      categoria: 'Ciudad',
-      rating: 4.9,
-      precio: 200
-    },
-    {
-      id: 3,
-      nombre: 'Maldivas',
-      pais: 'Maldivas',
-      imagen: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=400',
-      categoria: 'Playa',
-      rating: 5.0,
-      precio: 350
-    },
-    {
-      id: 4,
-      nombre: 'París',
-      pais: 'Francia',
-      imagen: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400',
-      categoria: 'Cultura',
-      rating: 4.8,
-      precio: 180
-    },
-    {
-      id: 5,
-      nombre: 'Cancún',
-      pais: 'México',
-      imagen: 'https://images.unsplash.com/photo-1552082992-3ee6d3f2e6bd?w=400',
-      categoria: 'Playa',
-      rating: 4.6,
-      precio: 150
-    },
-    {
-      id: 6,
-      nombre: 'Bali',
-      pais: 'Indonesia',
-      imagen: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=400',
-      categoria: 'Playa',
-      rating: 4.8,
-      precio: 85
-    },
-    {
-      id: 7,
-      nombre: 'Italia',
-      pais: 'Italia',
-      imagen: 'https://images.unsplash.com/photo-1523906834658-6e24ef2386f9?w=400',
-      categoria: 'Cultura',
-      rating: 4.9,
-      precio: 190
-    },
-    {
-      id: 8,
-      nombre: 'Venecia',
-      pais: 'Italia',
-      imagen: 'https://images.unsplash.com/photo-1514890547357-a9ee288728e0?w=400',
-      categoria: 'Ciudad',
-      rating: 4.7,
-      precio: 170
-    },
-    {
-      id: 9,
-      nombre: 'Fontana di Trevi',
-      pais: 'Italia',
-      imagen: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?w=400',
-      categoria: 'Cultural',
-      rating: 4.8,
-      precio: 50
-    },
-    {
-      id: 10,
-      nombre: 'Chihuahua',
-      pais: 'México',
-      imagen: 'https://images.unsplash.com/photo-1518509562904-e7ef99cdcc86?w=400',
-      categoria: 'Naturaleza',
-      rating: 4.6,
-      precio: 80
-    }
-  ];
-
-  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+  constructor(
+    @Inject(PLATFORM_ID) platformId: Object,
+    private destinosService: DestinosService,
+    private authService: AuthService
+  ) {
     this.isBrowser = isPlatformBrowser(platformId);
+  }
+
+  private getFavoritosKey(): string {
+    const user = this.authService.getCurrentUser();
+    if (user && user.uid) {
+      return `travelplus_favoritos_${user.uid}`;
+    }
+    return 'travelplus_favoritos';
   }
 
   ngOnInit(): void {
     if (this.isBrowser) {
-      this.cargarFavoritos();
+      // Cargar todos los destinos del servicio
+      this.destinosService.cargarDestinosDesdeBackend().subscribe({
+        next: (destinos) => {
+          this.todosLosDestinos = destinos;
+          this.cargarFavoritos();
+        },
+        error: (error) => {
+          console.warn('Error cargando destinos del backend, usando caché:', error);
+          // Intentar usar el caché si el backend falla
+          const destinosCacheados = this.destinosService.getDestinos();
+          console.log('Destinos en caché:', destinosCacheados.length);
+          this.cargarFavoritos();
+        }
+      });
       
       // Actualizar favoritos cada 2 segundos
       setInterval(() => {
@@ -142,24 +75,35 @@ export class FavoritesComponent implements OnInit {
     if (!this.isBrowser) return;
     
     try {
-      const favoritosGuardados = localStorage.getItem('travelplus_favoritos');
+      const favoritosGuardados = localStorage.getItem(this.getFavoritosKey());
       let favoritosIds: number[] = [];
 
       if (favoritosGuardados) {
         favoritosIds = JSON.parse(favoritosGuardados);
-      } else {
-        // Favoritos por defecto (según tu imagen)
-        favoritosIds = [7, 8, 9, 10]; // Italia, Venecia, Fontana di Trevi, Chihuahua
-        localStorage.setItem('travelplus_favoritos', JSON.stringify(favoritosIds));
       }
 
       // Convertir IDs a objetos completos con fecha
       this.destinosFavoritos = favoritosIds
         .map(id => {
-          const destino = this.todosLosDestinos.find(d => d.id === id);
+          let destino = this.todosLosDestinos.find(d => d.id === id);
+          
+          // Si no está en todosLosDestinos, intentar buscar en el caché del servicio
+          if (!destino) {
+            const destinosCache = this.destinosService.getDestinos();
+            const destinoCache = destinosCache.find(d => d.id === id);
+            if (destinoCache) {
+              destino = destinoCache as DestinoCompleto;
+            }
+          }
+          
           if (destino) {
             return {
-              ...destino,
+              id: destino.id,
+              nombre: destino.nombre,
+              pais: destino.pais,
+              imagen: destino.imagen,
+              categoria: destino.categoria,
+              rating: destino.rating,
               fechaAgregado: new Date()
             };
           }
@@ -170,7 +114,7 @@ export class FavoritesComponent implements OnInit {
       // Favoritos recientes (últimos 4)
       this.favoritosRecientes = this.destinosFavoritos.slice(-4).reverse();
 
-      console.log('Favoritos cargados:', this.destinosFavoritos.length);
+      console.log('Favoritos cargados:', this.destinosFavoritos.length, 'IDs:', favoritosIds);
     } catch (error) {
       console.error('Error al cargar favoritos:', error);
     }
@@ -187,11 +131,11 @@ export class FavoritesComponent implements OnInit {
     event.stopPropagation();
     
     try {
-      const favoritosGuardados = localStorage.getItem('travelplus_favoritos');
+      const favoritosGuardados = localStorage.getItem(this.getFavoritosKey());
       if (favoritosGuardados) {
         let favoritosIds: number[] = JSON.parse(favoritosGuardados);
         favoritosIds = favoritosIds.filter(id => id !== destino.id);
-        localStorage.setItem('travelplus_favoritos', JSON.stringify(favoritosIds));
+        localStorage.setItem(this.getFavoritosKey(), JSON.stringify(favoritosIds));
         
         this.cargarFavoritos();
         console.log('Destino eliminado de favoritos:', destino.nombre);
@@ -213,5 +157,21 @@ export class FavoritesComponent implements OnInit {
 
   getContadorRecientes(): string {
     return `${this.favoritosRecientes.length}`;
+  }
+
+  getCategoryClass(categoria: string): string {
+    const categoriaLower = categoria?.toLowerCase() || '';
+    const claseMap: { [key: string]: string } = {
+      'playa': 'category-playa',
+      'ciudad': 'category-ciudad',
+      'cultural': 'category-cultural',
+      'cultura': 'category-cultural',
+      'aventura': 'category-aventura',
+      'naturaleza': 'category-naturaleza',
+      'lujo': 'category-lujo',
+      'montaña': 'category-montana',
+      'montana': 'category-montana'
+    };
+    return claseMap[categoriaLower] || 'category-default';
   }
 }

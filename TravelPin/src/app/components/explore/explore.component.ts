@@ -233,4 +233,20 @@ export class ExploreComponent implements OnInit {
     
     return estrellas;
   }
+
+  getCategoryClass(categoria: string): string {
+    const categoriaLower = categoria?.toLowerCase() || '';
+    const claseMap: { [key: string]: string } = {
+      'playa': 'category-playa',
+      'ciudad': 'category-ciudad',
+      'cultural': 'category-cultural',
+      'cultura': 'category-cultural',
+      'aventura': 'category-aventura',
+      'naturaleza': 'category-naturaleza',
+      'lujo': 'category-lujo',
+      'montaña': 'category-montana',
+      'montana': 'category-montana'
+    };
+    return claseMap[categoriaLower] || 'category-default';
+  }
 }

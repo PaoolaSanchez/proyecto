@@ -1,6 +1,9 @@
 import { Component, OnInit, OnChanges, SimpleChanges, Output, EventEmitter, Input, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 
 interface Usuario {
   nombre: string;
@@ -38,8 +41,42 @@ export class ProfileComponent implements OnInit, OnChanges {
   mostrarEditarPerfil: boolean = false;
   nombreTemporal: string = '';
   emailTemporal: string = '';
+  
+  // Tab de edición (perfil o password)
+  tabEdicion: string = 'perfil';
+  
+  // Estados de carga
+  guardandoPerfil: boolean = false;
+  guardandoPassword: boolean = false;
+  
+  // Campos de contraseña
+  passwordActual: string = '';
+  passwordNueva: string = '';
+  passwordConfirmar: string = '';
+  
+  // Mostrar/ocultar contraseñas
+  mostrarPasswordActual: boolean = false;
+  mostrarPasswordNueva: boolean = false;
+  mostrarPasswordConfirmar: boolean = false;
+  
+  // Mensajes de estado
+  mensajeEstado: string = '';
+  esError: boolean = false;
+  
+  // Modal de confirmación de cierre de sesión
+  mostrarModalConfirmLogout: boolean = false;
+  
+  // Modal de despedida de cierre de sesión
+  mostrarModalLogout: boolean = false;
+  mensajeLogout: string = '';
+  contadorLogout: number = 3;
 
-  constructor(@Inject(PLATFORM_ID) platformId: Object) {
+  constructor(
+    @Inject(PLATFORM_ID) platformId: Object,
+    private authService: AuthService,
+    private router: Router,
+    private http: HttpClient
+  ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
@@ -69,6 +106,21 @@ export class ProfileComponent implements OnInit, OnChanges {
     if (!this.isBrowser) return;
     
     try {
+      // Obtener usuario logueado si existe
+      const currentUser = this.authService.getCurrentUser();
+      
+      if (currentUser && currentUser.email) {
+        // Usuario logueado - cargar desde AuthService
+        this.usuario.email = currentUser.email;
+        this.usuario.nombre = currentUser.email.split('@')[0]; // Usar parte del email como nombre
+        this.usuario.iniciales = this.obtenerIniciales(this.usuario.nombre);
+        
+        // Guardar en localStorage para persistencia
+        this.guardarDatosUsuario();
+        return;
+      }
+
+      // Si no hay usuario logueado, cargar desde localStorage
       const datosGuardados = localStorage.getItem('travelplus_usuario');
       if (datosGuardados) {
         const usuarioGuardado = JSON.parse(datosGuardados);
@@ -103,24 +155,123 @@ export class ProfileComponent implements OnInit, OnChanges {
   abrirEditarPerfil(): void {
     this.nombreTemporal = this.usuario.nombre;
     this.emailTemporal = this.usuario.email;
+    this.tabEdicion = 'perfil';
+    this.limpiarCamposPassword();
+    this.mensajeEstado = '';
     this.mostrarEditarPerfil = true;
   }
 
   cerrarEditarPerfil(): void {
     this.mostrarEditarPerfil = false;
+    this.limpiarCamposPassword();
+    this.mensajeEstado = '';
+  }
+
+  limpiarCamposPassword(): void {
+    this.passwordActual = '';
+    this.passwordNueva = '';
+    this.passwordConfirmar = '';
+    this.mostrarPasswordActual = false;
+    this.mostrarPasswordNueva = false;
+    this.mostrarPasswordConfirmar = false;
+  }
+
+  mostrarMensaje(mensaje: string, esError: boolean = false): void {
+    this.mensajeEstado = mensaje;
+    this.esError = esError;
+    
+    // Auto-ocultar mensaje después de 4 segundos
+    setTimeout(() => {
+      this.mensajeEstado = '';
+    }, 4000);
   }
 
   guardarCambiosPerfil(): void {
-    if (this.nombreTemporal.trim() && this.emailTemporal.trim()) {
-      this.usuario.nombre = this.nombreTemporal.trim();
-      this.usuario.email = this.emailTemporal.trim();
-      this.usuario.iniciales = this.obtenerIniciales(this.usuario.nombre);
-      this.guardarDatosUsuario();
-      this.cerrarEditarPerfil();
-      alert('Perfil actualizado correctamente');
-    } else {
-      alert('Por favor completa todos los campos');
+    if (!this.nombreTemporal.trim()) {
+      this.mostrarMensaje('Por favor ingresa tu nombre', true);
+      return;
     }
+
+    this.guardandoPerfil = true;
+    this.mensajeEstado = '';
+
+    // Llamar al backend para actualizar el perfil
+    this.http.put<any>(`/api/usuarios/perfil/${encodeURIComponent(this.usuario.email)}`, {
+      nombre: this.nombreTemporal.trim(),
+      nuevoEmail: this.emailTemporal.trim()
+    }).subscribe({
+      next: (response) => {
+        this.guardandoPerfil = false;
+        if (response.success) {
+          // Actualizar datos locales
+          this.usuario.nombre = this.nombreTemporal.trim();
+          this.usuario.iniciales = this.obtenerIniciales(this.usuario.nombre);
+          this.guardarDatosUsuario();
+          this.mostrarMensaje('✅ Perfil actualizado correctamente');
+          
+          // Cerrar modal después de un momento
+          setTimeout(() => {
+            this.cerrarEditarPerfil();
+          }, 1500);
+        } else {
+          this.mostrarMensaje(response.message || 'Error al actualizar perfil', true);
+        }
+      },
+      error: (error) => {
+        this.guardandoPerfil = false;
+        console.error('Error al actualizar perfil:', error);
+        this.mostrarMensaje(error.error?.message || 'Error al conectar con el servidor', true);
+      }
+    });
+  }
+
+  cambiarPassword(): void {
+    // Validaciones
+    if (!this.passwordActual) {
+      this.mostrarMensaje('Ingresa tu contraseña actual', true);
+      return;
+    }
+    if (!this.passwordNueva) {
+      this.mostrarMensaje('Ingresa la nueva contraseña', true);
+      return;
+    }
+    if (this.passwordNueva.length < 6) {
+      this.mostrarMensaje('La nueva contraseña debe tener al menos 6 caracteres', true);
+      return;
+    }
+    if (this.passwordNueva !== this.passwordConfirmar) {
+      this.mostrarMensaje('Las contraseñas no coinciden', true);
+      return;
+    }
+
+    this.guardandoPassword = true;
+    this.mensajeEstado = '';
+
+    // Llamar al backend para cambiar la contraseña
+    this.http.put<any>(`/api/usuarios/cambiar-password/${encodeURIComponent(this.usuario.email)}`, {
+      currentPassword: this.passwordActual,
+      newPassword: this.passwordNueva
+    }).subscribe({
+      next: (response) => {
+        this.guardandoPassword = false;
+        if (response.success) {
+          this.mostrarMensaje('✅ Contraseña actualizada correctamente');
+          this.limpiarCamposPassword();
+          
+          // Cerrar modal después de un momento
+          setTimeout(() => {
+            this.cerrarEditarPerfil();
+          }, 1500);
+        } else {
+          this.mostrarMensaje(response.message || 'Error al cambiar contraseña', true);
+        }
+      },
+      error: (error) => {
+        this.guardandoPassword = false;
+        console.error('Error al cambiar contraseña:', error);
+        this.mostrarMensaje(error.error?.message || 'Error al conectar con el servidor', true);
+      }
+    });
   }
 
   obtenerIniciales(nombre: string): string {
@@ -132,14 +283,45 @@ export class ProfileComponent implements OnInit, OnChanges {
   }
 
   cerrarSesion(): void {
-    const confirmar = confirm('¿Estás seguro que deseas cerrar sesión?');
-    if (confirmar) {
+    // Mostrar modal de confirmación
+    this.mostrarModalConfirmLogout = true;
+  }
+
+  cancelarLogout(): void {
+    this.mostrarModalConfirmLogout = false;
+  }
+
+  confirmarLogout(): void {
+    // Cerrar modal de confirmación
+    this.mostrarModalConfirmLogout = false;
+    
+    // Mostrar modal de despedida
+    this.mostrarModalLogout = true;
+    this.mensajeLogout = '¡Hasta pronto! Cerrando sesión...';
+    this.contadorLogout = 3;
+    
+    // Usar AuthService para logout
+    this.authService.logout().then(() => {
+      // Limpiar datos locales del usuario
       if (this.isBrowser) {
         localStorage.removeItem('travelplus_usuario');
       }
-      alert('Sesión cerrada');
-      this.navegarTab('inicio');
-    }
+      
+      // Iniciar cuenta regresiva
+      const intervalo = setInterval(() => {
+        this.contadorLogout--;
+        if (this.contadorLogout <= 0) {
+          clearInterval(intervalo);
+          this.mostrarModalLogout = false;
+          // Emitir evento para ir al inicio y forzar recarga de la página
+          this.navegarATab.emit('inicio');
+          // Forzar recarga después de un pequeño delay
+          setTimeout(() => {
+            window.location.href = '/home';
+          }, 100);
+        }
+      }, 1000);
+    });
   }
 
   navegarTab(tab: string): void {

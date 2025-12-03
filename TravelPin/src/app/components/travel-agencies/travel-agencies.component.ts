@@ -1,39 +1,31 @@
-import { Component, OnInit, Output, EventEmitter } from '@angular/core';
-import { CommonModule } from '@angular/common';
+//travel-agencies.component.ts
+import { Component, OnInit, Output, EventEmitter, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 
 interface Agencia {
   id: number;
   nombre: string;
   logo: string;
-  rating: number;
   descripcion: string;
-  destinos: number[];
-  especialidad: string;
+  contacto?: string;
+  sitio_web?: string;
+  rating?: number;
+  especialidad?: string;
 }
 
 interface PaqueteViaje {
   id: number;
-  agenciaId: number;
-  destinoId: number;
-  nombrePaquete: string;
+  agencia_id: number;
+  nombre: string;
   duracion: string;
   precio: number;
   incluye: string[];
-  itinerario: ItemItinerario[];
-  gastos: GastoDetallado[];
-}
-
-interface ItemItinerario {
-  dia: number;
-  actividad: string;
-  descripcion: string;
-}
-
-interface GastoDetallado {
-  concepto: string;
-  monto: number;
-  categoria: 'transporte' | 'hospedaje' | 'comida' | 'actividades' | 'otros';
+  itinerario: { dia: number; actividades: string }[];
+  gastos: { concepto: string; monto: number }[];
+  destinos?: { id: number; nombre: string; pais: string; imagen_principal?: string }[];
 }
 
 @Component({
@@ -47,138 +39,12 @@ export class TravelAgenciesComponent implements OnInit {
   @Output() navegarATab = new EventEmitter<string>();
   @Output() cerrar = new EventEmitter<void>();
 
-  agencias: Agencia[] = [
-    {
-      id: 1,
-      nombre: 'Viajes Globales',
-      logo: '🌎',
-      rating: 4.8,
-      descripcion: 'Expertos en viajes internacionales',
-      destinos: [1, 2, 3, 4, 5, 6],
-      especialidad: 'Internacional'
-    },
-    {
-      id: 2,
-      nombre: 'Aventura Total',
-      logo: '⛰️',
-      rating: 4.9,
-      descripcion: 'Especialistas en turismo de aventura',
-      destinos: [1, 8],
-      especialidad: 'Aventura'
-    },
-    {
-      id: 3,
-      nombre: 'Playas Paradisíacas',
-      logo: '🏖️',
-      rating: 4.7,
-      descripcion: 'Los mejores destinos de playa',
-      destinos: [3, 5, 6, 9],
-      especialidad: 'Playa'
-    },
-    {
-      id: 4,
-      nombre: 'City Tours Pro',
-      logo: '🏙️',
-      rating: 4.6,
-      descripcion: 'Tours urbanos y culturales',
-      destinos: [2, 4, 7, 11, 12],
-      especialidad: 'Ciudad'
-    }
-  ];
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
 
-  paquetes: PaqueteViaje[] = [
-    {
-      id: 1,
-      agenciaId: 1,
-      destinoId: 4, // París
-      nombrePaquete: 'París Romántico - 5 días',
-      duracion: '5 días / 4 noches',
-      precio: 15000,
-      incluye: [
-        'Vuelo redondo',
-        'Hotel 4 estrellas',
-        'Desayunos incluidos',
-        'Tour por la Torre Eiffel',
-        'Crucero por el Sena',
-        'Guía en español'
-      ],
-      itinerario: [
-        { dia: 1, actividad: 'Llegada a París', descripcion: 'Transfer al hotel y recorrido por Montmartre' },
-        { dia: 2, actividad: 'Torre Eiffel y Louvre', descripcion: 'Visita guiada a los principales monumentos' },
-        { dia: 3, actividad: 'Versalles', descripcion: 'Excursión al Palacio de Versalles' },
-        { dia: 4, actividad: 'Crucero y compras', descripcion: 'Crucero por el Sena y tarde libre' },
-        { dia: 5, actividad: 'Despedida', descripcion: 'Transfer al aeropuerto' }
-      ],
-      gastos: [
-        { concepto: 'Vuelo redondo', monto: 8000, categoria: 'transporte' },
-        { concepto: 'Hotel 4 noches', monto: 4000, categoria: 'hospedaje' },
-        { concepto: 'Desayunos', monto: 800, categoria: 'comida' },
-        { concepto: 'Tours y entradas', monto: 1500, categoria: 'actividades' },
-        { concepto: 'Transfers', monto: 700, categoria: 'transporte' }
-      ]
-    },
-    {
-      id: 2,
-      agenciaId: 2,
-      destinoId: 1, // Machu Picchu
-      nombrePaquete: 'Aventura Inca - 4 días',
-      duracion: '4 días / 3 noches',
-      precio: 12000,
-      incluye: [
-        'Vuelo Lima-Cusco',
-        'Hotel en Cusco',
-        'Tren a Aguas Calientes',
-        'Entrada a Machu Picchu',
-        'Guía especializado',
-        'Todas las comidas'
-      ],
-      itinerario: [
-        { dia: 1, actividad: 'Llegada a Cusco', descripcion: 'Aclimatación y city tour' },
-        { dia: 2, actividad: 'Valle Sagrado', descripcion: 'Recorrido por Pisac y Ollantaytambo' },
-        { dia: 3, actividad: 'Machu Picchu', descripcion: 'Visita guiada a la ciudadela inca' },
-        { dia: 4, actividad: 'Regreso', descripcion: 'Transfer al aeropuerto' }
-      ],
-      gastos: [
-        { concepto: 'Vuelos', monto: 4000, categoria: 'transporte' },
-        { concepto: 'Hotel 3 noches', monto: 2500, categoria: 'hospedaje' },
-        { concepto: 'Alimentación completa', monto: 1500, categoria: 'comida' },
-        { concepto: 'Tren turístico', monto: 2000, categoria: 'transporte' },
-        { concepto: 'Entradas y guía', monto: 2000, categoria: 'actividades' }
-      ]
-    },
-    {
-      id: 3,
-      agenciaId: 3,
-      destinoId: 3, // Maldivas
-      nombrePaquete: 'Maldivas All Inclusive - 7 días',
-      duracion: '7 días / 6 noches',
-      precio: 35000,
-      incluye: [
-        'Vuelo internacional',
-        'Resort 5 estrellas',
-        'Todo incluido',
-        'Spa y actividades acuáticas',
-        'Cenas románticas',
-        'Transfer en lancha'
-      ],
-      itinerario: [
-        { dia: 1, actividad: 'Llegada', descripcion: 'Transfer al resort en lancha privada' },
-        { dia: 2, actividad: 'Playa y relax', descripcion: 'Día libre en la playa privada' },
-        { dia: 3, actividad: 'Snorkel', descripcion: 'Tour de snorkel en arrecife de coral' },
-        { dia: 4, actividad: 'Spa', descripcion: 'Tratamiento de spa incluido' },
-        { dia: 5, actividad: 'Excursión', descripcion: 'Pesca deportiva y cena en la playa' },
-        { dia: 6, actividad: 'Día libre', descripcion: 'Actividades opcionales' },
-        { dia: 7, actividad: 'Despedida', descripcion: 'Transfer al aeropuerto' }
-      ],
-      gastos: [
-        { concepto: 'Vuelo internacional', monto: 15000, categoria: 'transporte' },
-        { concepto: 'Resort 6 noches', monto: 12000, categoria: 'hospedaje' },
-        { concepto: 'Todo incluido', monto: 6000, categoria: 'comida' },
-        { concepto: 'Actividades y spa', monto: 2000, categoria: 'actividades' }
-      ]
-    }
-  ];
-
+  agencias: Agencia[] = [];
+  paquetesPorAgencia: Map<number, PaqueteViaje[]> = new Map();
+  
   agenciaSeleccionada?: Agencia;
   paqueteSeleccionado?: PaqueteViaje;
   mostrarDetalleAgencia: boolean = false;
@@ -191,11 +57,51 @@ export class TravelAgenciesComponent implements OnInit {
   fechaSalida: string = '';
   numPersonas: number = 1;
 
-  ngOnInit(): void {}
+  // Modales de notificación para reserva
+  mostrarModalReservaExitosa: boolean = false;
+  mostrarModalErrorReserva: boolean = false;
+  emailConfirmacion: string = '';
+
+  constructor(private http: HttpClient, private authService: AuthService) {}
+
+  ngOnInit(): void {
+    this.cargarAgencias();
+  }
+
+  cargarAgencias(): void {
+    this.http.get<Agencia[]>('/api/agencias')
+      .subscribe({
+        next: (agencias) => {
+          this.agencias = agencias.map(a => ({
+            ...a,
+            rating: 4.5 + Math.random() * 0.5, // Rating aleatorio entre 4.5 y 5
+            especialidad: 'Viajes'
+          }));
+        },
+        error: (error) => {
+          console.error('Error al cargar agencias:', error);
+        }
+      });
+  }
+
+  cargarPaquetesAgencia(agenciaId: number): void {
+    if (this.paquetesPorAgencia.has(agenciaId)) return;
+    
+    this.http.get<PaqueteViaje[]>(`/api/agencias/${agenciaId}/paquetes`)
+      .subscribe({
+        next: (paquetes) => {
+          this.paquetesPorAgencia.set(agenciaId, paquetes);
+        },
+        error: (error) => {
+          console.error('Error al cargar paquetes:', error);
+        }
+      });
+  }
 
   verDetalleAgencia(agencia: Agencia): void {
     this.agenciaSeleccionada = agencia;
     this.mostrarDetalleAgencia = true;
+    this.cargarPaquetesAgencia(agencia.id);
   }
 
   cerrarDetalleAgencia(): void {
@@ -204,7 +110,7 @@ export class TravelAgenciesComponent implements OnInit {
   }
 
   getPaquetesPorAgencia(agenciaId: number): PaqueteViaje[] {
-    return this.paquetes.filter(p => p.agenciaId === agenciaId);
+    return this.paquetesPorAgencia.get(agenciaId) || [];
   }
 
   verDetallePaquete(paquete: PaqueteViaje): void {
@@ -219,7 +125,7 @@ export class TravelAgenciesComponent implements OnInit {
   }
 
   reservarPaquete(): void {
-    if (!this.paqueteSeleccionado) return;
+    if (!this.paqueteSeleccionado || !this.isBrowser) return;
 
     // Validaciones
     if (!this.nombreCliente.trim()) {
@@ -235,42 +141,116 @@ export class TravelAgenciesComponent implements OnInit {
       return;
     }
 
-    // Crear el viaje en la colección
-    const nuevaColeccion = {
-      id: Date.now(),
-      nombre: this.paqueteSeleccionado.nombrePaquete,
+    const fechaInicio = this.formatearFecha(this.fechaSalida);
+    const fechaFin = this.calcularFechaFin(this.fechaSalida, this.paqueteSeleccionado.duracion);
+    const destinosIds = this.paqueteSeleccionado.destinos?.map(d => d.id) || [];
+
+    // Obtener el ID del usuario actual
+    const currentUser = this.authService.getCurrentUser();
+    const usuarioId = currentUser?.uid ? parseInt(currentUser.uid) : null;
+
+    const viajeData = {
+      nombre: this.paqueteSeleccionado.nombre,
       icono: '✈️',
-      destinos: [this.paqueteSeleccionado.destinoId],
-      fechaCreacion: Date.now(),
-      fechaInicio: this.formatearFecha(this.fechaSalida),
-      fechaFin: this.calcularFechaFin(this.fechaSalida, this.paqueteSeleccionado.duracion),
-      finalizado: false,
+      destinos: destinosIds,
+      fechaInicio: fechaInicio,
+      fechaFin: fechaFin,
+      usuario_id: usuarioId,
       agencia: {
-        id: this.paqueteSeleccionado.agenciaId,
-        nombre: this.getAgenciaNombre(this.paqueteSeleccionado.agenciaId),
+        id: this.paqueteSeleccionado.agencia_id,
+        nombre: this.getAgenciaNombre(this.paqueteSeleccionado.agencia_id),
         paqueteId: this.paqueteSeleccionado.id
       },
-      gastosProgramados: this.paqueteSeleccionado.gastos,
-      itinerarioProgramado: this.paqueteSeleccionado.itinerario
+      participanteInicial: {
+        nombre: this.nombreCliente,
+        email: this.emailCliente,
+        iniciales: this.nombreCliente.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2),
+        color: '#FF6B6B'
+      }
     };
 
-    // Guardar en localStorage
-    const colecciones = this.obtenerColecciones();
-    colecciones.push(nuevaColeccion);
-    localStorage.setItem('travelplus_colecciones', JSON.stringify(colecciones));
+    // Crear viaje en el backend
+    this.http.post<{ id: number }>('/api/viajes', viajeData).subscribe({
+      next: (response) => {
+        const viajeId = response.id;
+        
+        // Agregar itinerario del paquete al viaje
+        if (this.paqueteSeleccionado?.itinerario && this.paqueteSeleccionado.itinerario.length > 0) {
+          this.paqueteSeleccionado.itinerario.forEach((item) => {
+            const itinerarioData = {
+              fecha: this.calcularFechaDia(this.fechaSalida, item.dia),
+              actividad: item.actividades,
+              destino_id: destinosIds[0] || null
+            };
+            this.http.post(`/api/viajes/${viajeId}/itinerario`, itinerarioData).subscribe({
+              error: (err) => console.error('Error al agregar itinerario:', err)
+            });
+          });
+        }
+        
+        // Agregar gastos del paquete al viaje (multiplicados por número de personas)
+        if (this.paqueteSeleccionado?.gastos && this.paqueteSeleccionado.gastos.length > 0) {
+          // Crear gastos por cada persona
+          for (let persona = 1; persona <= this.numPersonas; persona++) {
+            this.paqueteSeleccionado.gastos.forEach((gasto) => {
+              const gastoData = {
+                concepto: this.numPersonas > 1 ? `${gasto.concepto} (Persona ${persona})` : gasto.concepto,
+                monto: gasto.monto,
+                participante_id: 1,
+                pagado: false
+              };
+              this.http.post(`/api/viajes/${viajeId}/gastos`, gastoData).subscribe({
+                error: (err) => console.error('Error al agregar gasto:', err)
+              });
+            });
+          }
+        }
 
-    alert(`¡Viaje reservado exitosamente!\n\nRecibirás un correo de confirmación a ${this.emailCliente}`);
-    
-    // Limpiar formulario
+        // Notificar a la agencia sobre la nueva reservación
+        this.notificarAgenciaReservacion(viajeId);
+
+        // Guardar también en localStorage para sincronizar
+        const nuevaColeccion = {
+          id: viajeId,
+          nombre: this.paqueteSeleccionado!.nombre,
+          icono: '✈️',
+          destinos: destinosIds,
+          fechaCreacion: Date.now(),
+          fechaInicio: fechaInicio,
+          fechaFin: fechaFin,
+          finalizado: false,
+          agencia: viajeData.agencia
+        };
+
+        const colecciones = this.obtenerColecciones();
+        colecciones.push(nuevaColeccion);
+        localStorage.setItem('travelplus_colecciones', JSON.stringify(colecciones));
+
+        this.emailConfirmacion = this.emailCliente;
+        this.mostrarModalReservaExitosa = true;
+        
+        this.limpiarFormularioReserva();
+        this.cerrarDetallePaquete();
+      },
+      error: (error) => {
+        console.error('Error al crear viaje:', error);
+        this.mostrarModalErrorReserva = true;
+      }
+    });
+  }
+
+  private calcularFechaDia(fechaSalida: string, dia: number): string {
+    const fecha = new Date(fechaSalida);
+    fecha.setDate(fecha.getDate() + dia - 1);
+    return fecha.toISOString().split('T')[0];
+  }
+
+  private limpiarFormularioReserva(): void {
     this.nombreCliente = '';
     this.emailCliente = '';
     this.telefonoCliente = '';
     this.fechaSalida = '';
     this.numPersonas = 1;
-    
-    // Cerrar modal y navegar a viajes
-    this.cerrarDetallePaquete();
-    this.navegarATab.emit('viajes');
   }
 
   obtenerColecciones(): any[] {
@@ -303,7 +283,7 @@ export class TravelAgenciesComponent implements OnInit {
     return this.formatearFecha(fecha.toISOString());
   }
 
-  getTotalGastos(gastos: GastoDetallado[]): number {
+  getTotalGastos(gastos: { concepto: string; monto: number }[]): number {
     return gastos.reduce((total, gasto) => total + gasto.monto, 0);
   }
 
@@ -335,5 +315,75 @@ export class TravelAgenciesComponent implements OnInit {
 
   volver(): void {
     this.cerrar.emit();
+  }
+
+  cerrarModalReservaExitosa(): void {
+    this.mostrarModalReservaExitosa = false;
+    this.navegarATab.emit('viajes');
+  }
+
+  cerrarModalErrorReserva(): void {
+    this.mostrarModalErrorReserva = false;
+  }
+
+  private notificarAgenciaReservacion(viajeId: number): void {
+    if (!this.paqueteSeleccionado || !this.agenciaSeleccionada) return;
+
+    // Obtener email de la agencia
+    this.http.get<any>(`/api/agencias/${this.agenciaSeleccionada.id}`).subscribe({
+      next: (agencia) => {
+        if (agencia.email) {
+          const precioTotal = this.paqueteSeleccionado!.precio * this.numPersonas;
+          const subject = `Nueva Reservación - ${this.paqueteSeleccionado!.nombre}`;
+          const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+              <h2 style="color: #667eea; border-bottom: 2px solid #667eea; padding-bottom: 10px;">
+                🎉 ¡Nueva Reservación!
+              </h2>
+              
+              <div style="background: #f7fafc; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h3 style="color: #2d3748; margin: 0 0 15px 0;">Detalles del Paquete</h3>
+                <p><strong>Paquete:</strong> ${this.paqueteSeleccionado!.nombre}</p>
+                <p><strong>Duración:</strong> ${this.paqueteSeleccionado!.duracion}</p>
+                <p><strong>Precio por persona:</strong> $${this.paqueteSeleccionado!.precio.toLocaleString()} MXN</p>
+              </div>
+
+              <div style="background: #e6fffa; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h3 style="color: #234e52; margin: 0 0 15px 0;">Información del Cliente</h3>
+                <p><strong>Nombre:</strong> ${this.nombreCliente}</p>
+                <p><strong>Email:</strong> ${this.emailCliente}</p>
+                <p><strong>Teléfono:</strong> ${this.telefonoCliente || 'No proporcionado'}</p>
+                <p><strong>Fecha de salida:</strong> ${this.formatearFecha(this.fechaSalida)}</p>
+              </div>
+
+              <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                <h3 style="margin: 0 0 15px 0;">💰 Resumen de la Reservación</h3>
+                <p style="font-size: 18px;"><strong>Número de personas:</strong> ${this.numPersonas}</p>
+                <p style="font-size: 24px; margin: 10px 0;"><strong>Total:</strong> $${precioTotal.toLocaleString()} MXN</p>
+              </div>
+
+              <p style="color: #718096; font-size: 14px; margin-top: 30px;">
+                ID de reservación: #${viajeId}<br>
+                Este correo fue enviado automáticamente desde TravelPin.
+              </p>
+            </div>
+          `;
+
+          // Enviar correo a la agencia
+          fetch('http://localhost:3000/api/email/test-send', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to: agencia.email, subject, html })
+          }).then(() => {
+            console.log('Notificación enviada a la agencia:', agencia.email);
+          }).catch(err => {
+            console.error('Error al notificar a la agencia:', err);
+          });
+        }
+      },
+      error: (err) => {
+        console.warn('No se pudo obtener información de la agencia:', err);
+      }
+    });
   }
 }

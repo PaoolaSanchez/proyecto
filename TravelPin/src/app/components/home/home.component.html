@@ -1,11 +1,31 @@
 <div class="app-container">
+  <!-- Modal de advertencia de autenticación -->
+  <app-auth-warning-modal 
+    [isVisible]="mostrarAuthWarning"
+    (close)="closeAuthWarning()"
+    (login)="onAuthWarningLogin()"
+    (signup)="onAuthWarningSignup()">
+  </app-auth-warning-modal>
+
   <!-- Página Principal -->
   <div *ngIf="!mostrarResultados && !mostrarDetalle && !mostrarExplorar && !mostrarViajes && !mostrarDetalleViaje && !mostrarFavoritos && !mostrarPerfil">
+    
     <!-- Header -->
     <header class="header">
       <div class="logo">
         <div class="logo-icon">✈️</div>
         <span class="logo-text">TravelPlus</span>
+      </div>
+      
+      <!-- Auth Buttons - Only show if not logged in -->
+      <div class="auth-buttons" *ngIf="!isLoggedIn()">
+        <button class="btn-login" (click)="navigateToLogin()">
+          Iniciar Sesión
+        </button>
+        <span class="auth-divider">/</span>
+        <button class="btn-signup" (click)="navigateToSignup()">
+          Crear cuenta
+        </button>
       </div>
     </header>
 
@@ -131,29 +151,33 @@
     *ngIf="mostrarDetalleViaje && !mostrarDetalle"
     [viajeId]="viajeSeleccionadoId"
     (volver)="volverDesdeTripDetail()"
-    (verDetalleDestino)="verDetalleDestinoDesdeTrip($event)">
+    (verDetalleDestino)="verDetalleDestinoDesdeTrip($event)"
+    (navegarATab)="cambiarTab($event)">
   </app-trip-detail>
 
    <!-- Página Perfil -->
-<app-profile
-  *ngIf="mostrarPerfil"
-  [contadorFavoritos]="getContadorFavoritos()"
-  [contadorViajes]="getContadorViajes()"
-  (navegarATab)="cambiarTab($event)">
-</app-profile>
+  <app-profile
+    *ngIf="mostrarPerfil"
+    [contadorFavoritos]="getContadorFavoritos()"
+    [contadorViajes]="getContadorViajes()"
+    (navegarATab)="cambiarTab($event)">
+  </app-profile>
 
   <!-- Página de Resultados -->
   <app-results 
     *ngIf="mostrarResultados && !mostrarDetalle"
     [respuestasEncuesta]="respuestasUsuario"
-    (verDetalle)="verDetalleDesdeResultados($event)">
+    (verDetalle)="verDetalleDesdeResultados($event)"
+    (refinarBusqueda)="refinarBusqueda()"
+    (verTodosDestinos)="verTodosDestinosDesdeResultados()">
   </app-results>
 
   <!-- Página de Detalle -->
   <app-destination-detail
     *ngIf="mostrarDetalle"
     [destinoId]="destinoSeleccionadoId"
-    (volver)="volverDesdeDetalle()">
+    (volver)="volverDesdeDetalle()"
+    (navegarATab)="cambiarTab($event)">
   </app-destination-detail>
 
   <!-- Survey Modal -->

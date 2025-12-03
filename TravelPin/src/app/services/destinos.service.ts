@@ -1,4 +1,7 @@
 import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 
 export interface DestinoBasico {
   id: number;
@@ -31,11 +34,39 @@ export interface DestinoCompleto extends DestinoBasico {
   };
 }
 
+// Interface para los destinos que vienen del backend
+interface DestinoBackend {
+  id: number;
+  nombre: string;
+  pais: string;
+  categoria: string;
+  imagen: string;
+  imagen_principal?: string;
+  rating: number;
+  descripcion?: string;
+  presupuesto_promedio?: string;
+  duracion_recomendada?: string;
+  mejor_epoca?: string;
+  que_hacer?: string[] | string;
+  consejos?: string[] | string;
+  que_llevar?: string[] | string;
+  emergencias?: any;
+  imagenes_galeria?: string[] | string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class DestinosService {
-  private destinosCompletos: DestinoCompleto[] = [
+  // Usar ruta relativa para que funcione tanto en cliente como en SSR
+  private apiUrl = '/api';
+  
+  // Caché de destinos
+  private destinosCache = new BehaviorSubject<DestinoCompleto[]>([]);
+  public destinos$ = this.destinosCache.asObservable();
+  
+  // Datos de fallback (si el backend no está disponible)
+  private destinosFallback: DestinoCompleto[] = [
     {
       id: 1,
       nombre: 'Machu Picchu',
@@ -51,7 +82,7 @@ export class DestinosService {
         'https://images.unsplash.com/photo-1526392060635-9d6019884377?w=400',
         'https://images.unsplash.com/photo-1531968455001-5c5272a41129?w=400'
       ],
-      descripcion: 'Machu Picchu es una antigua ciudad inca ubicada en lo alto de los Andes peruanos. Este sitio arqueológico es considerado una de las maravillas del mundo moderno y ofrece vistas espectaculares de las montañas circundantes.',
+      descripcion: 'Machu Picchu es una antigua ciudad inca ubicada en lo alto de los Andes peruanos.',
       queHacer: [
         'Explorar las ruinas incas',
         'Caminar por el Camino Inca',
@@ -67,18 +98,12 @@ export class DestinosService {
       consejos: [
         'Reserva tus entradas con anticipación',
         'Aclimátate a la altitud en Cusco primero',
-        'Lleva protector solar y repelente',
-        'Usa ropa cómoda para caminar',
-        'Contrata un guía para mejor experiencia'
+        'Lleva protector solar y repelente'
       ],
       queEllevar: [
         'Pasaporte vigente',
         'Bloqueador solar',
-        'Repelente de insectos',
-        'Ropa cómoda y ligera',
-        'Zapatos para trekking',
-        'Cámara fotográfica',
-        'Dinero en efectivo (soles)'
+        'Repelente de insectos'
       ],
       emergencias: {
         policia: '105',
@@ -102,13 +127,11 @@ export class DestinosService {
         'https://images.unsplash.com/photo-1513407030348-c983a97b98d8?w=400',
         'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?w=400'
       ],
-      descripcion: 'Tokyo es la vibrante capital de Japón, donde la tradición milenaria se encuentra con la tecnología de vanguardia. Una megalópolis que ofrece templos históricos, jardines zen, rascacielos futuristas y la mejor gastronomía del mundo.',
+      descripcion: 'Tokyo es la vibrante capital de Japón, donde la tradición se encuentra con la tecnología.',
       queHacer: [
         'Visitar el Templo Senso-ji',
         'Explorar el cruce de Shibuya',
-        'Conocer el Palacio Imperial',
-        'Probar sushi en Tsukiji',
-        'Ver la Torre de Tokyo'
+        'Conocer el Palacio Imperial'
       ],
       detallesViaje: {
         mejorEpoca: 'Marzo a Mayo / Septiembre a Noviembre',
@@ -117,17 +140,11 @@ export class DestinosService {
       },
       consejos: [
         'Compra un JR Pass para moverte',
-        'Aprende frases básicas en japonés',
-        'Lleva efectivo siempre',
-        'Respeta las costumbres locales',
-        'Visita durante la temporada de cerezos'
+        'Aprende frases básicas en japonés'
       ],
       queEllevar: [
         'Adaptador de corriente',
-        'Tarjeta Suica o Pasmo',
-        'Ropa modesta para templos',
-        'Zapatos fáciles de quitar',
-        'Guía de frases en japonés'
+        'Tarjeta Suica o Pasmo'
       ],
       emergencias: {
         policia: '110',
@@ -151,13 +168,11 @@ export class DestinosService {
         'https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=400',
         'https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=400'
       ],
-      descripcion: 'Las Maldivas son un paraíso tropical compuesto por más de 1,000 islas de coral. Famosas por sus aguas cristalinas color turquesa, playas de arena blanca y lujosos resorts sobre el agua, son el destino perfecto para luna de miel y descanso.',
+      descripcion: 'Las Maldivas son un paraíso tropical con aguas cristalinas.',
       queHacer: [
         'Buceo en arrecifes de coral',
         'Snorkel con mantarrayas',
-        'Cena romántica en la playa',
-        'Excursiones en bote',
-        'Spa y tratamientos de relajación'
+        'Cena romántica en la playa'
       ],
       detallesViaje: {
         mejorEpoca: 'Noviembre a Abril',
@@ -166,18 +181,12 @@ export class DestinosService {
       },
       consejos: [
         'Reserva tu resort con anticipación',
-        'Considera el tipo de pensión',
-        'Lleva equipo de snorkel propio',
-        'Reserva excursiones desde antes',
-        'Respeta el medio ambiente marino'
+        'Lleva equipo de snorkel propio'
       ],
       queEllevar: [
         'Traje de baño',
         'Protector solar biodegradable',
-        'Cámara acuática',
-        'Ropa ligera y fresca',
-        'Sandalias de playa',
-        'Gafas de sol'
+        'Cámara acuática'
       ],
       emergencias: {
         policia: '119',
@@ -201,13 +210,11 @@ export class DestinosService {
         'https://images.unsplash.com/photo-1511739001486-6bfe10ce785f?w=400',
         'https://images.unsplash.com/photo-1431274172761-fca41d930114?w=400'
       ],
-      descripcion: 'París, la Ciudad de la Luz, es sinónimo de romance, arte y gastronomía. Con monumentos icónicos como la Torre Eiffel y el Louvre, cafés pintorescos y una arquitectura impresionante, París cautiva a millones de visitantes cada año.',
+      descripcion: 'París, la Ciudad de la Luz, es sinónimo de romance y arte.',
       queHacer: [
         'Subir a la Torre Eiffel',
         'Visitar el Museo del Louvre',
-        'Pasear por los Campos Elíseos',
-        'Conocer Notre-Dame',
-        'Crucero por el Sena'
+        'Pasear por los Campos Elíseos'
       ],
       detallesViaje: {
         mejorEpoca: 'Abril a Junio / Septiembre a Octubre',
@@ -216,17 +223,12 @@ export class DestinosService {
       },
       consejos: [
         'Compra el Paris Pass',
-        'Aprende francés básico',
-        'Usa el metro para moverte',
-        'Reserva restaurantes con anticipación',
-        'Visita museos en días gratuitos'
+        'Usa el metro para moverte'
       ],
       queEllevar: [
         'Ropa elegante casual',
         'Zapatos cómodos para caminar',
-        'Adaptador europeo',
-        'Guía turística',
-        'Paraguas pequeño'
+        'Adaptador europeo'
       ],
       emergencias: {
         policia: '17',
@@ -250,13 +252,11 @@ export class DestinosService {
         'https://images.unsplash.com/photo-1568402102990-bc541580b59f?w=400',
         'https://images.unsplash.com/photo-1512813498716-3e640fed3f39?w=400'
       ],
-      descripcion: 'Cancún es el destino de playa más popular de México, famoso por sus aguas turquesas, playas de arena blanca, vida nocturna vibrante y acceso a las ruinas mayas. Perfecto para unas vacaciones tropicales inolvidables.',
+      descripcion: 'Cancún es el destino de playa más popular de México.',
       queHacer: [
         'Visitar las ruinas de Chichén Itzá',
         'Nadar en cenotes',
-        'Buceo en el museo subacuático',
-        'Explorar Isla Mujeres',
-        'Disfrutar de la vida nocturna'
+        'Buceo en el museo subacuático'
       ],
       detallesViaje: {
         mejorEpoca: 'Diciembre a Abril',
@@ -265,18 +265,12 @@ export class DestinosService {
       },
       consejos: [
         'Reserva tours con anticipación',
-        'Usa protector solar biodegradable',
-        'Lleva efectivo para propinas',
-        'Cuidado con el sol del mediodía',
-        'Prueba la comida local'
+        'Usa protector solar biodegradable'
       ],
       queEllevar: [
         'Traje de baño',
         'Protector solar',
-        'Sombrero y lentes de sol',
-        'Ropa ligera',
-        'Repelente de mosquitos',
-        'Zapatos para agua'
+        'Sombrero y lentes de sol'
       ],
       emergencias: {
         policia: '911',
@@ -300,13 +294,11 @@ export class DestinosService {
         'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=400',
         'https://images.unsplash.com/photo-1559628376-f3fe5f782a2e?w=400'
       ],
-      descripcion: 'Bali, la Isla de los Dioses, combina playas paradisíacas, templos sagrados, arrozales en terrazas y una cultura espiritual única. Un destino que ofrece desde surf y yoga hasta aventuras en la jungla.',
+      descripcion: 'Bali combina playas paradisíacas y templos sagrados.',
       queHacer: [
         'Visitar templos antiguos',
         'Surf en las mejores playas',
-        'Clases de yoga y meditación',
-        'Explorar arrozales de Ubud',
-        'Ver el amanecer en Monte Batur'
+        'Clases de yoga y meditación'
       ],
       detallesViaje: {
         mejorEpoca: 'Abril a Octubre',
@@ -315,18 +307,12 @@ export class DestinosService {
       },
       consejos: [
         'Respeta las costumbres religiosas',
-        'Lleva ropa modesta para templos',
-        'Negocia precios en mercados',
-        'Contrata un scooter para moverte',
-        'Prueba la comida balinesa'
+        'Lleva ropa modesta para templos'
       ],
       queEllevar: [
         'Sarong para templos',
         'Protector solar',
-        'Repelente de insectos',
-        'Ropa cómoda y ligera',
-        'Calzado para caminar',
-        'Adaptador de corriente'
+        'Repelente de insectos'
       ],
       emergencias: {
         policia: '110',
@@ -337,39 +323,225 @@ export class DestinosService {
     }
   ];
 
-  constructor() {}
+  constructor(private http: HttpClient) {
+    // Cargar destinos al iniciar
+    this.cargarDestinosIniciales();
+  }
+
+  // ==================== MÉTODOS PÚBLICOS ====================
+
+  // Cargar destinos desde el backend
+  cargarDestinosDesdeBackend(): Observable<DestinoCompleto[]> {
+    return this.http.get<{ success: boolean; count: number; data: DestinoBackend[] }>(`${this.apiUrl}/destinos`).pipe(
+      map(response => this.convertirDestinosBackend(response.data || [])),
+      tap(destinos => {
+        this.destinosCache.next(destinos);
+        console.log('✅ Destinos cargados desde backend:', destinos.length);
+      }),
+      catchError(error => {
+        console.warn('⚠️ Error cargando destinos del backend, usando datos locales:', error);
+        this.destinosCache.next(this.destinosFallback);
+        return of(this.destinosFallback);
+      })
+    );
+  }
 
   // Obtener todos los destinos (versión básica para listados)
   getDestinos(): DestinoBasico[] {
-    return this.destinosCompletos.map(d => ({
-      id: d.id,
-      nombre: d.nombre,
-      pais: d.pais,
-      categoria: d.categoria,
-      imagen: d.imagen,
-      rating: d.rating,
-      esFavorito: d.esFavorito,
-      colorCategoria: d.colorCategoria
-    }));
+    const destinos = this.destinosCache.value;
+    if (destinos.length === 0) {
+      return this.destinosFallback.map(d => this.convertirABasico(d));
+    }
+    return destinos.map(d => this.convertirABasico(d));
   }
 
   // Obtener un destino completo por ID
   getDestinoById(id: number): DestinoCompleto | undefined {
-    return this.destinosCompletos.find(d => d.id === id);
+    const destinos = this.destinosCache.value;
+    const destinosABuscar = destinos.length > 0 ? destinos : this.destinosFallback;
+    return destinosABuscar.find(d => d.id === id);
   }
 
   // Actualizar estado de favorito
   actualizarFavorito(id: number, esFavorito: boolean): void {
-    const destino = this.destinosCompletos.find(d => d.id === id);
+    const destinos = this.destinosCache.value;
+    const destino = destinos.find(d => d.id === id);
     if (destino) {
       destino.esFavorito = esFavorito;
+      this.destinosCache.next([...destinos]);
     }
   }
 
-  // Sincronizar favoritos desde localStorage
+  // Sincronizar favoritos desde localStorage o backend
   sincronizarFavoritos(favoritosIds: number[]): void {
-    this.destinosCompletos.forEach(destino => {
-      destino.esFavorito = favoritosIds.includes(destino.id);
+    const destinos = this.destinosCache.value;
+    const destinosActualizados = destinos.map(destino => ({
+      ...destino,
+      esFavorito: favoritosIds.includes(destino.id)
+    }));
+    this.destinosCache.next(destinosActualizados);
+  }
+
+  // Obtener destinos como Observable
+  getDestinosObservable(): Observable<DestinoBasico[]> {
+    return this.destinos$.pipe(
+      map(destinos => destinos.map(d => this.convertirABasico(d)))
+    );
+  }
+
+  // Obtener un destino completo por ID desde el backend
+  getDestinoByIdFromBackend(id: number): Observable<DestinoCompleto> {
+    return this.http.get<{ success: boolean; count?: number; data: DestinoBackend }>(`${this.apiUrl}/destinos/${id}`).pipe(
+      map(response => {
+        const destino = this.convertirDestinosBackend([response.data])[0];
+        return destino;
+      }),
+      // Almacenar en la caché local para que componentes posteriores lo encuentren
+      tap((destino: DestinoCompleto) => {
+        try {
+          const cache = this.destinosCache.value || [];
+          const existe = cache.find(d => d.id === destino.id);
+          if (existe) {
+            const actualizado = cache.map(d => d.id === destino.id ? destino : d);
+            this.destinosCache.next([...actualizado]);
+          } else {
+            this.destinosCache.next([...cache, destino]);
+          }
+        } catch (e) {
+          // no bloquear si la actualización de cache falla
+          console.warn('⚠️ Error actualizando cache de destinos:', e);
+        }
+      }),
+      catchError(error => {
+        console.warn(`⚠️ Error cargando destino ${id} del backend:`, error);
+        // Intentar obtener del fallback
+        const fallback = this.destinosFallback.find(d => d.id === id);
+        if (fallback) {
+          return of(fallback);
+        }
+        throw error;
+      })
+    );
+  }
+
+  // ==================== MÉTODOS PRIVADOS ====================
+
+  private cargarDestinosIniciales(): void {
+    // Intentar cargar desde backend
+    this.cargarDestinosDesdeBackend().subscribe({
+      next: () => {
+        console.log('✅ Destinos inicializados desde backend');
+      },
+      error: () => {
+        console.warn('⚠️ Usando datos locales de fallback');
+      }
     });
+  }
+
+  private convertirDestinosBackend(destinosBackend: DestinoBackend[]): DestinoCompleto[] {
+    return destinosBackend.map(db => {
+      // Buscar datos adicionales en fallback solo si no hay datos en el backend
+      const fallbackData = this.destinosFallback.find(d => d.id === db.id);
+      
+      // Parsear campos JSON del backend
+      const queHacer = this.parsearArrayJSON(db.que_hacer);
+      const consejos = this.parsearArrayJSON(db.consejos);
+      const queLlevar = this.parsearArrayJSON(db.que_llevar);
+      const emergencias = this.parsearObjetoJSON(db.emergencias);
+      const imagenesGaleria = this.parsearArrayJSON(db.imagenes_galeria);
+      
+      return {
+        id: db.id,
+        nombre: db.nombre,
+        pais: db.pais,
+        categoria: db.categoria,
+        imagen: db.imagen,
+        rating: db.rating,
+        esFavorito: false,
+        colorCategoria: this.getColorPorCategoria(db.categoria),
+        imagenPrincipal: db.imagen_principal || db.imagen,
+        imagenesGaleria: imagenesGaleria.length > 0 ? imagenesGaleria : (fallbackData?.imagenesGaleria || [db.imagen]),
+        descripcion: db.descripcion || fallbackData?.descripcion || '',
+        queHacer: queHacer.length > 0 ? queHacer : (fallbackData?.queHacer || []),
+        detallesViaje: {
+          mejorEpoca: db.mejor_epoca || fallbackData?.detallesViaje.mejorEpoca || '',
+          duracionRecomendada: db.duracion_recomendada || fallbackData?.detallesViaje.duracionRecomendada || '',
+          presupuestoPromedio: db.presupuesto_promedio || fallbackData?.detallesViaje.presupuestoPromedio || ''
+        },
+        consejos: consejos.length > 0 ? consejos : (fallbackData?.consejos || []),
+        queEllevar: queLlevar.length > 0 ? queLlevar : (fallbackData?.queEllevar || []),
+        emergencias: emergencias && Object.keys(emergencias).length > 0 ? emergencias : (fallbackData?.emergencias || {
+          policia: '911',
+          bomberos: '911',
+          ambulancia: '911',
+          embajada: ''
+        })
+      };
+    });
+  }
+
+  // Método helper para parsear arrays JSON del backend
+  private parsearArrayJSON(valor: string[] | string | undefined): string[] {
+    if (!valor) return [];
+    if (Array.isArray(valor)) return valor;
+    try {
+      const parsed = JSON.parse(valor);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  // Método helper para parsear objetos JSON del backend
+  private parsearObjetoJSON(valor: any): any {
+    if (!valor) return {};
+    if (typeof valor === 'object' && !Array.isArray(valor)) return valor;
+    try {
+      return JSON.parse(valor);
+    } catch {
+      return {};
+    }
+  }
+
+  private convertirABasico(destino: DestinoCompleto): DestinoBasico {
+    return {
+      id: destino.id,
+      nombre: destino.nombre,
+      pais: destino.pais,
+      categoria: destino.categoria,
+      imagen: destino.imagen,
+      rating: destino.rating,
+      esFavorito: destino.esFavorito,
+      colorCategoria: destino.colorCategoria
+    };
+  }
+
+  private getColorPorCategoria(categoria: string): string {
+    const categoriaLower = (categoria || '').toLowerCase();
+    const colores: { [key: string]: string } = {
+      'aventura': '#4CAF50',      // Verde - Aventura/Adrenalina
+      'ciudad': '#667eea',        // Púrpura/Azul - Urbano
+      'lujo': '#ba8b02',          // Dorado - Lujo/Premium
+      'cultura': '#f5576c',       // Rosa/Coral - Cultural
+      'cultural': '#f5576c',      // Rosa/Coral - Cultural (alias)
+      'playa': '#00b4db',         // Azul turquesa - Playa/Mar
+      'naturaleza': '#11998e',    // Verde esmeralda - Naturaleza
+      'montaña': '#557c93',       // Azul grisáceo - Montaña
+      'montana': '#557c93',       // Montaña (sin tilde)
+      'romantico': '#E91E63',     // Rosa - Romántico
+      'familiar': '#FF9800',      // Naranja - Familiar
+      'gastronomia': '#795548',   // Marrón - Gastronomía
+      'historico': '#9C27B0',     // Púrpura - Histórico
+      'religioso': '#673AB7',     // Índigo - Religioso
+      'deportes': '#2196F3',      // Azul - Deportes
+      'ecologico': '#8BC34A',     // Verde claro - Ecológico
+      'rural': '#795548'          // Marrón - Rural
+    };
+    return colores[categoriaLower] || '#607D8B';
+  }
+
+  // Método para refrescar los destinos
+  refrescarDestinos(): Observable<DestinoCompleto[]> {
+    return this.cargarDestinosDesdeBackend();
   }
 }

@@ -1,6 +1,8 @@
-import { Component, OnInit, Output, EventEmitter, OnDestroy } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Output, EventEmitter, OnDestroy, inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { HttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth.service';
 
 interface Coleccion {
   id: number;
@@ -46,6 +48,10 @@ export class TripsComponent implements OnInit, OnDestroy {
   @Output() verDetalleViaje = new EventEmitter<number>();
   @Output() crearNuevoViaje = new EventEmitter<void>();
 
+  private http = inject(HttpClient);
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser = isPlatformBrowser(this.platformId);
+
   currentTab: string = 'viajes';
   viajes: Viaje[] = [];
   private colecciones: Coleccion[] = [];
@@ -56,6 +62,11 @@ export class TripsComponent implements OnInit, OnDestroy {
   nuevoViajeNombre: string = '';
   nuevoViajeFechaInicio: string = '';
   nuevoViajeFechaFin: string = '';
+  
+  // Variables para el modal de eliminar viaje
+  mostrarModalEliminar: boolean = false;
+  viajeAEliminar?: Viaje;
+  eliminandoViaje: boolean = false;
 
   destinosDB = [
     {
@@ -96,6 +107,16 @@ export class TripsComponent implements OnInit, OnDestroy {
     }
   ];
 
+  constructor(private authService: AuthService) {}
+
+  private getStorageKey(): string {
+    const user = this.authService.getCurrentUser();
+    if (user && user.uid) {
+      return `travelplus_colecciones_${user.uid}`;
+    }
+    return 'travelplus_colecciones';
+  }
+
   ngOnInit(): void {
     this.cargarViajes();
     this.verificarViajesFinalizados();
@@ -103,9 +124,8 @@ export class TripsComponent implements OnInit, OnDestroy {
     this.intervalId = setInterval(() => {
       if (!this.mostrarModalCrearViaje) {
         this.verificarViajesFinalizados();
-        this.cargarViajes();
       }
-    }, 10000); // 10 segundos en lugar de 1 segundo
+    }, 30000); // 30 segundos
   }
 
   ngOnDestroy(): void {
@@ -137,23 +157,72 @@ export class TripsComponent implements OnInit, OnDestroy {
     
     if (huboActualizacion) {
       this.guardarEnLocalStorage();
-      this.cargarViajes();
     }
   }
 
   cargarViajes(): void {
-    this.cargarDesdeLocalStorage();
-    this.convertirColeccionesAViajes(this.colecciones);
+    // Obtener el ID del usuario actual para filtrar sus viajes
+    const currentUser = this.authService.getCurrentUser();
+    const usuarioId = currentUser?.uid || '';
+    
+    // Cargar viajes desde el backend filtrados por usuario
+    this.http.get<any[]>(`/api/viajes?usuario_id=${usuarioId}`).subscribe({
+      next: (viajesBackend) => {
+        console.log('✅ Viajes cargados del backend:', viajesBackend);
+        
+        // Convertir viajes del backend al formato del componente
+        this.viajes = viajesBackend.map(v => ({
+          id: v.id,
+          nombre: v.nombre,
+          icono: v.icono || '✈️',
+          destinos: (v.destinos || []).map((d: any) => ({
+            id: d.id,
+            nombre: d.nombre,
+            pais: d.pais,
+            imagen: d.imagen || this.getImagenDestino(d.id)
+          })),
+          fechaCreacion: new Date(v.created_at || Date.now()),
+          fechaInicio: v.fecha_inicio || v.fechaInicio,
+          fechaFin: v.fecha_fin || v.fechaFin,
+          finalizado: v.finalizado
+        }));
+        
+        // También actualizar colecciones para mantener compatibilidad
+        this.colecciones = viajesBackend.map(v => ({
+          id: v.id,
+          nombre: v.nombre,
+          icono: v.icono || '✈️',
+          destinos: (v.destinos || []).map((d: any) => d.id),
+          fechaCreacion: Date.now(),
+          fechaInicio: v.fecha_inicio || v.fechaInicio,
+          fechaFin: v.fecha_fin || v.fechaFin,
+          finalizado: v.finalizado
+        }));
+      },
+      error: (error) => {
+        console.error('Error al cargar viajes del backend:', error);
+        // Fallback: cargar desde localStorage
+        this.cargarDesdeLocalStorage();
+        this.convertirColeccionesAViajes(this.colecciones);
+      }
+    });
+  }
+
+  private getImagenDestino(destinoId: number): string {
+    const destino = this.destinosDB.find(d => d.id === destinoId);
+    return destino?.imagen || 'https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400';
   }
 
   cargarDesdeLocalStorage(): void {
+    if (!this.isBrowser) return;
+    
     try {
-      const data = localStorage.getItem('travelplus_colecciones');
+      const storageKey = this.getStorageKey();
+      const data = localStorage.getItem(storageKey);
       if (data) {
         this.colecciones = JSON.parse(data);
       } else {
         this.colecciones = [];
-        this.guardarEnLocalStorage();
       }
     } catch (error) {
       console.error('Error al cargar desde localStorage:', error);
@@ -162,7 +231,8 @@ export class TripsComponent implements OnInit, OnDestroy {
 
   guardarEnLocalStorage(): void {
     try {
-      localStorage.setItem('travelplus_colecciones', JSON.stringify(this.colecciones));
+      const storageKey = this.getStorageKey();
+      localStorage.setItem(storageKey, JSON.stringify(this.colecciones));
     } catch (error) {
       console.error('Error al guardar en localStorage:', error);
     }
@@ -249,23 +319,64 @@ export class TripsComponent implements OnInit, OnDestroy {
     const iconos = ['🏖️', '🏔️', '🏛️', '🌴', '🗼', '🏰', '🌊', '🎭'];
     const icono = iconos[Math.floor(Math.random() * iconos.length)];
 
-    const nuevaColeccion: Coleccion = {
-      id: Date.now(),
+    // Obtener el ID del usuario actual
+    const currentUser = this.authService.getCurrentUser();
+    const usuarioId = currentUser?.uid ? parseInt(currentUser.uid) : null;
+
+    // Crear viaje en el backend primero para obtener un ID válido
+    // El servidor obtiene automáticamente los datos del usuario de la base de datos
+    const viajeData = {
       nombre: this.nuevoViajeNombre.trim(),
       icono: icono,
       destinos: [],
-      fechaCreacion: Date.now(),
       fechaInicio: this.nuevoViajeFechaInicio,
       fechaFin: this.nuevoViajeFechaFin,
-      finalizado: false
+      usuario_id: usuarioId
     };
 
-    this.colecciones.push(nuevaColeccion);
-    this.guardarEnLocalStorage();
-    this.cargarViajes();
+    this.http.post<{ id: number }>('/api/viajes', viajeData).subscribe({
+      next: (response) => {
+        // Usar el ID del backend
+        const nuevaColeccion: Coleccion = {
+          id: response.id,
+          nombre: this.nuevoViajeNombre.trim(),
+          icono: icono,
+          destinos: [],
+          fechaCreacion: Date.now(),
+          fechaInicio: this.nuevoViajeFechaInicio,
+          fechaFin: this.nuevoViajeFechaFin,
+          finalizado: false
+        };
 
-    console.log('Nueva colección creada:', nuevaColeccion);
-    this.cerrarModalCrearViaje();
+        this.colecciones.push(nuevaColeccion);
+        this.guardarEnLocalStorage();
+        this.cargarViajes();
+
+        console.log('Nueva colección creada con ID del backend:', nuevaColeccion);
+        this.cerrarModalCrearViaje();
+      },
+      error: (error) => {
+        console.error('Error al crear viaje en backend:', error);
+        // Fallback a ID local si falla el backend
+        const nuevaColeccion: Coleccion = {
+          id: Date.now(),
+          nombre: this.nuevoViajeNombre.trim(),
+          icono: icono,
+          destinos: [],
+          fechaCreacion: Date.now(),
+          fechaInicio: this.nuevoViajeFechaInicio,
+          fechaFin: this.nuevoViajeFechaFin,
+          finalizado: false
+        };
+
+        this.colecciones.push(nuevaColeccion);
+        this.guardarEnLocalStorage();
+        this.cargarViajes();
+
+        console.log('Nueva colección creada con ID local (fallback):', nuevaColeccion);
+        this.cerrarModalCrearViaje();
+      }
+    });
   }
 
   validarFormatoFecha(fecha: string): boolean {
@@ -310,17 +421,55 @@ export class TripsComponent implements OnInit, OnDestroy {
 
   eliminarViaje(viaje: Viaje, event: Event): void {
     event.stopPropagation();
+    this.viajeAEliminar = viaje;
+    this.mostrarModalEliminar = true;
+  }
+
+  cancelarEliminar(): void {
+    this.mostrarModalEliminar = false;
+    this.viajeAEliminar = undefined;
+  }
+
+  confirmarEliminar(): void {
+    if (!this.viajeAEliminar) return;
     
-    const confirmar = confirm(`¿Estás seguro de eliminar "${viaje.nombre}"?`);
-    if (confirmar) {
-      const index = this.colecciones.findIndex(c => c.id === viaje.id);
-      if (index > -1) {
-        this.colecciones.splice(index, 1);
-        this.guardarEnLocalStorage();
+    this.eliminandoViaje = true;
+    
+    // Eliminar del backend
+    this.http.delete(`/api/viajes/${this.viajeAEliminar.id}`).subscribe({
+      next: () => {
+        console.log('✅ Viaje eliminado del backend:', this.viajeAEliminar?.nombre);
+        
+        // También eliminar de localStorage por compatibilidad
+        const index = this.colecciones.findIndex(c => c.id === this.viajeAEliminar?.id);
+        if (index > -1) {
+          this.colecciones.splice(index, 1);
+          this.guardarEnLocalStorage();
+        }
+        
+        // Recargar viajes
         this.cargarViajes();
-        console.log('Viaje eliminado:', viaje.nombre);
+        
+        this.eliminandoViaje = false;
+        this.mostrarModalEliminar = false;
+        this.viajeAEliminar = undefined;
+      },
+      error: (error) => {
+        console.error('Error al eliminar viaje:', error);
+        this.eliminandoViaje = false;
+        
+        // Intentar eliminar solo de localStorage si el backend falla
+        const index = this.colecciones.findIndex(c => c.id === this.viajeAEliminar?.id);
+        if (index > -1) {
+          this.colecciones.splice(index, 1);
+          this.guardarEnLocalStorage();
+          this.cargarViajes();
+        }
+        
+        this.mostrarModalEliminar = false;
+        this.viajeAEliminar = undefined;
       }
-    }
+    });
   }
 
   editarViaje(viaje: Viaje, event: Event): void {

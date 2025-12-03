@@ -39,23 +39,23 @@
 
   <!-- Bottom Navigation -->
   <nav class="bottom-nav">
-    <button class="nav-item">
+    <button class="nav-item" (click)="cambiarTab('inicio')">
       <span class="nav-icon">🏠</span>
       <span class="nav-label">Inicio</span>
     </button>
-    <button class="nav-item">
+    <button class="nav-item" (click)="cambiarTab('explorar')">
       <span class="nav-icon">🔍</span>
       <span class="nav-label">Explorar</span>
     </button>
-    <button class="nav-item active">
+    <button class="nav-item active" (click)="cambiarTab('viajes')">
       <span class="nav-icon">🧳</span>
       <span class="nav-label">Viajes</span>
     </button>
-    <button class="nav-item">
+    <button class="nav-item" (click)="cambiarTab('favoritos')">
       <span class="nav-icon">💖</span>
       <span class="nav-label">Favoritos</span>
     </button>
-    <button class="nav-item">
+    <button class="nav-item" (click)="cambiarTab('perfil')">
       <span class="nav-icon">👤</span>
       <span class="nav-label">Perfil</span>
     </button>

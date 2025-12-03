@@ -83,32 +83,131 @@
       </div>
 
       <div class="modal-body">
-        <div class="form-group">
-          <label class="form-label">Nombre</label>
-          <input 
-            type="text" 
-            class="form-input"
-            [(ngModel)]="nombreTemporal"
-            placeholder="Tu nombre completo">
+        <!-- Tabs para perfil y contraseña -->
+        <div class="edit-tabs">
+          <button class="edit-tab" [class.active]="tabEdicion === 'perfil'" (click)="tabEdicion = 'perfil'">
+            📝 Datos Personales
+          </button>
+          <button class="edit-tab" [class.active]="tabEdicion === 'password'" (click)="tabEdicion = 'password'">
+            🔒 Contraseña
+          </button>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input 
-            type="email" 
-            class="form-input"
-            [(ngModel)]="emailTemporal"
-            placeholder="tu@email.com">
+        <!-- Tab Datos Personales -->
+        <div *ngIf="tabEdicion === 'perfil'" class="tab-content">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input 
+              type="text" 
+              class="form-input"
+              [(ngModel)]="nombreTemporal"
+              placeholder="Tu nombre completo">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input 
+              type="email" 
+              class="form-input"
+              [(ngModel)]="emailTemporal"
+              placeholder="tu@email.com"
+              [disabled]="true">
+            <small class="form-hint">El email no se puede cambiar</small>
+          </div>
+
+          <button class="btn-save-full" (click)="guardarCambiosPerfil()" [disabled]="guardandoPerfil">
+            <span *ngIf="!guardandoPerfil">💾 Guardar Cambios</span>
+            <span *ngIf="guardandoPerfil">⏳ Guardando...</span>
+          </button>
+        </div>
+
+        <!-- Tab Cambiar Contraseña -->
+        <div *ngIf="tabEdicion === 'password'" class="tab-content">
+          <div class="form-group">
+            <label class="form-label">Contraseña Actual</label>
+            <div class="password-input-container">
+              <input 
+                [type]="mostrarPasswordActual ? 'text' : 'password'" 
+                class="form-input"
+                [(ngModel)]="passwordActual"
+                placeholder="Tu contraseña actual">
+              <button type="button" class="btn-toggle-password" (click)="mostrarPasswordActual = !mostrarPasswordActual">
+                {{ mostrarPasswordActual ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nueva Contraseña</label>
+            <div class="password-input-container">
+              <input 
+                [type]="mostrarPasswordNueva ? 'text' : 'password'" 
+                class="form-input"
+                [(ngModel)]="passwordNueva"
+                placeholder="Mínimo 6 caracteres">
+              <button type="button" class="btn-toggle-password" (click)="mostrarPasswordNueva = !mostrarPasswordNueva">
+                {{ mostrarPasswordNueva ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirmar Nueva Contraseña</label>
+            <div class="password-input-container">
+              <input 
+                [type]="mostrarPasswordConfirmar ? 'text' : 'password'" 
+                class="form-input"
+                [(ngModel)]="passwordConfirmar"
+                placeholder="Repite la nueva contraseña">
+              <button type="button" class="btn-toggle-password" (click)="mostrarPasswordConfirmar = !mostrarPasswordConfirmar">
+                {{ mostrarPasswordConfirmar ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <button class="btn-save-full btn-password" (click)="cambiarPassword()" [disabled]="guardandoPassword">
+            <span *ngIf="!guardandoPassword">🔐 Cambiar Contraseña</span>
+            <span *ngIf="guardandoPassword">⏳ Cambiando...</span>
+          </button>
+        </div>
+
+        <!-- Mensaje de estado -->
+        <div *ngIf="mensajeEstado" class="mensaje-estado" [class.error]="esError" [class.success]="!esError">
+          {{ mensajeEstado }}
         </div>
       </div>
+    </div>
+  </div>
 
-      <div class="modal-footer">
-        <button class="btn-cancel" (click)="cerrarEditarPerfil()">
+  <!-- Modal Confirmar Cierre de Sesión -->
+  <div class="modal-overlay modal-confirm-overlay" *ngIf="mostrarModalConfirmLogout" (click)="cancelarLogout()">
+    <div class="modal-confirm" (click)="$event.stopPropagation()">
+      <div class="confirm-icon-container">
+        <span class="confirm-emoji">🚪</span>
+      </div>
+      <h2 class="confirm-title">¿Cerrar sesión?</h2>
+      <p class="confirm-text">¿Estás seguro que deseas cerrar tu sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta.</p>
+      <div class="confirm-buttons">
+        <button class="btn-confirm-cancel" (click)="cancelarLogout()">
           Cancelar
         </button>
-        <button class="btn-save" (click)="guardarCambiosPerfil()">
-          Guardar Cambios
+        <button class="btn-confirm-logout" (click)="confirmarLogout()">
+          Sí, cerrar sesión
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cierre de Sesión -->
+  <div class="modal-overlay modal-logout-overlay" *ngIf="mostrarModalLogout">
+    <div class="modal-logout">
+      <div class="logout-icon-container">
+        <span class="logout-emoji">👋</span>
+      </div>
+      <h2 class="logout-title">{{ mensajeLogout }}</h2>
+      <p class="logout-countdown">Redirigiendo en {{ contadorLogout }} segundo{{ contadorLogout !== 1 ? 's' : '' }}...</p>
+      <div class="logout-progress">
+        <div class="logout-progress-bar" [style.width.%]="((3 - contadorLogout) / 3) * 100"></div>
       </div>
     </div>
   </div>

@@ -53,7 +53,7 @@
             </span>
             <span class="rating-value">{{ destino.rating }}</span>
           </div>
-          <span class="result-category">{{ destino.categoria }}</span>
+          <span class="result-category" [ngClass]="getCategoryClass(destino.categoria)">{{ destino.categoria }}</span>
         </div>
       </div>
     </div>

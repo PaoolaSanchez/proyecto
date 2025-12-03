@@ -1,32 +1,51 @@
 <div class="detail-container" *ngIf="destinoActual">
-  <!-- Header -->
-  <header class="detail-header">
-    <button class="back-btn" (click)="volverAtras()">←</button>
-    <h1 class="detail-title">{{ destinoActual.nombre }}</h1>
-    <button class="share-btn" (click)="compartir()">⤴</button>
-  </header>
+  <!-- Auth Warning Modal -->
+  <app-auth-warning-modal
+    [isVisible]="mostrarAuthWarning"
+    (close)="closeAuthWarning()"
+    (login)="onAuthWarningLogin()"
+    (signup)="onAuthWarningSignup()">
+  </app-auth-warning-modal>
 
-  <!-- Imagen Principal -->
-  <div class="main-image-container">
-    <img [src]="destinoActual.imagenPrincipal" [alt]="destinoActual.nombre" class="main-image">
-    <div class="image-overlay">
-      <h2 class="destination-name">{{ destinoActual.nombre }}</h2>
-      <p class="destination-country">📍 {{ destinoActual.pais }}</p>
-    </div>
+  <!-- Indicador de carga -->
+  <div *ngIf="cargando" class="loading-container">
+    <div class="spinner"></div>
+    <p>Cargando información del destino...</p>
   </div>
 
-  <!-- Galería de Imágenes -->
-  <div class="gallery-container">
-    <div class="gallery-scroll">
-      <img 
-        *ngFor="let imagen of destinoActual.imagenesGaleria" 
-        [src]="imagen" 
-        [alt]="destinoActual.nombre"
-        class="gallery-image">
-    </div>
+  <!-- Mensaje de error -->
+  <div *ngIf="errorCarga" class="error-container">
+    <p class="error-message">{{ errorCarga }}</p>
+    <button class="btn-retry" (click)="volverAtras()">← Volver atrás</button>
   </div>
 
-  <!-- Tabs Navigation -->
+  <div *ngIf="!cargando && !errorCarga">
+    <!-- Header -->
+    <header class="detail-header">
+      <button class="back-btn" (click)="volverAtras()">←</button>
+      <h1 class="detail-title">{{ destinoActual.nombre }}</h1>
+      <button class="share-btn" (click)="compartir()">⤴</button>
+    </header>
+
+    <!-- Imagen Principal -->
+    <div class="main-image-container">
+      <img [src]="destinoActual.imagenPrincipal" [alt]="destinoActual.nombre" class="main-image">
+      <div class="image-overlay">
+        <h2 class="destination-name">{{ destinoActual.nombre }}</h2>
+        <p class="destination-country">📍 {{ destinoActual.pais }}</p>
+      </div>
+    </div>
+
+    <!-- Galería de Imágenes -->
+    <div class="gallery-container">
+      <div class="gallery-scroll">
+        <img 
+          *ngFor="let imagen of destinoActual.imagenesGaleria" 
+          [src]="imagen" 
+          [alt]="destinoActual.nombre"
+          class="gallery-image">
+      </div>
+    </div>  <!-- Tabs Navigation -->
   <div class="tabs-navigation">
     <button 
       class="tab-btn" 
@@ -145,8 +164,8 @@
             <h4 class="agency-preview-name">{{ agencia.nombre }}</h4>
             <p class="agency-preview-description">{{ agencia.descripcion }}</p>
             <div class="agency-preview-meta">
-              <span class="preview-rating">
-                ⭐ {{ agencia.rating }}
+              <span class="preview-rating" *ngIf="agencia.rating">
+                ⭐ {{ agencia.rating.toFixed(1) }}
               </span>
               <span class="preview-packages">
                 {{ contarPaquetes(agencia.id) }} paquetes disponibles
@@ -156,11 +175,17 @@
           <span class="arrow-icon">›</span>
         </div>
 
+        <!-- Cargando paquetes -->
+        <div *ngIf="cargandoPaquetes" class="loading-packages">
+          <div class="spinner-small"></div>
+          <p>Cargando paquetes disponibles...</p>
+        </div>
+
         <!-- Sin agencias -->
-        <div *ngIf="getAgenciasParaDestino().length === 0" class="no-agencies">
+        <div *ngIf="!cargandoPaquetes && getAgenciasParaDestino().length === 0" class="no-agencies">
           <div class="no-agencies-icon">🏢</div>
           <p class="no-agencies-text">
-            Aún no hay agencias disponibles para este destino
+            Aún no hay paquetes disponibles para este destino
           </p>
         </div>
       </div>
@@ -178,11 +203,11 @@
           <div class="agency-detail-info">
             <h2 class="agency-detail-name">{{ agenciaSeleccionada.nombre }}</h2>
             <p class="agency-detail-description">{{ agenciaSeleccionada.descripcion }}</p>
-            <div class="agency-detail-rating">
-              <span *ngFor="let estrella of getEstrellas(agenciaSeleccionada.rating)" class="star">
+            <div class="agency-detail-rating" *ngIf="agenciaSeleccionada.rating">
+              <span *ngFor="let estrella of getEstrellas(agenciaSeleccionada.rating || 4.5)" class="star">
                 {{ estrella }}
               </span>
-              <span class="rating-number">{{ agenciaSeleccionada.rating }}</span>
+              <span class="rating-number">{{ agenciaSeleccionada.rating.toFixed(1) }}</span>
             </div>
           </div>
         </div>
@@ -198,7 +223,7 @@
             class="package-card"
             (click)="verDetallePaquete(paquete)">
             <div class="package-header">
-              <h4 class="package-name">{{ paquete.nombrePaquete }}</h4>
+              <h4 class="package-name">{{ paquete.nombre }}</h4>
               <span class="package-price">${{ paquete.precio.toLocaleString() }}</span>
             </div>
             <p class="package-duration">⏱️ {{ paquete.duracion }}</p>
@@ -227,7 +252,7 @@
       </button>
 
       <div class="package-detail-card">
-        <h2 class="package-detail-name">{{ paqueteSeleccionado.nombrePaquete }}</h2>
+        <h2 class="package-detail-name">{{ paqueteSeleccionado.nombre }}</h2>
         <div class="package-detail-meta">
           <span class="detail-duration">⏱️ {{ paqueteSeleccionado.duracion }}</span>
           <span class="detail-price">${{ paqueteSeleccionado.precio.toLocaleString() }} MXN</span>
@@ -251,8 +276,7 @@
           <div *ngFor="let item of paqueteSeleccionado.itinerario" class="itinerary-item">
             <div class="itinerary-day">Día {{ item.dia }}</div>
             <div class="itinerary-content">
-              <h4 class="itinerary-activity">{{ item.actividad }}</h4>
-              <p class="itinerary-description">{{ item.descripcion }}</p>
+              <p class="itinerary-activity">{{ item.actividades }}</p>
             </div>
           </div>
         </div>
@@ -263,7 +287,7 @@
         <h3 class="detail-section-title">💰 Desglose de Gastos</h3>
         <div class="expenses-list">
           <div *ngFor="let gasto of paqueteSeleccionado.gastos" class="expense-item">
-            <span class="expense-icon">{{ getIconoCategoria(gasto.categoria) }}</span>
+            <span class="expense-icon">💵</span>
             <span class="expense-concept">{{ gasto.concepto }}</span>
             <span class="expense-amount">${{ gasto.monto.toLocaleString() }}</span>
           </div>
@@ -322,6 +346,22 @@
               [(ngModel)]="numPersonas"
               min="1"
               max="10">
+          </div>
+
+          <!-- Resumen de precio -->
+          <div class="precio-resumen">
+            <div class="precio-linea">
+              <span>Precio por persona:</span>
+              <span>${{ paqueteSeleccionado.precio.toLocaleString() }} MXN</span>
+            </div>
+            <div class="precio-linea" *ngIf="numPersonas > 1">
+              <span>Número de personas:</span>
+              <span>× {{ numPersonas }}</span>
+            </div>
+            <div class="precio-total-final">
+              <span>Total a pagar:</span>
+              <span class="precio-grande">${{ (paqueteSeleccionado.precio * numPersonas).toLocaleString() }} MXN</span>
+            </div>
           </div>
 
           <button class="btn-reserve" (click)="reservarPaquete()">
@@ -396,6 +436,26 @@
       Ver Mapa
     </button>
   </div>
+
+  <!-- Barra de Navegación Inferior -->
+  <nav class="bottom-nav">
+    <button class="nav-item" (click)="cambiarTabPrincipal('explorar')">
+      <span class="nav-icon">🔍</span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTabPrincipal('viajes')">
+      <span class="nav-icon">✈️</span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTabPrincipal('favoritos')">
+      <span class="nav-icon">❤️</span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTabPrincipal('perfil')">
+      <span class="nav-icon">👤</span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
 </div>
 
 <!-- Modal de Colecciones -->
@@ -405,3 +465,28 @@
   (cerrar)="cerrarColecciones()"
   (destinoAgregado)="onDestinoAgregado($event)">
 </app-collections-modal>
+
+<!-- Modal Reserva Exitosa -->
+<div class="modal-overlay" *ngIf="mostrarModalReservaExitosa">
+  <div class="modal-content modal-success">
+    <div class="modal-icon">✈️</div>
+    <h3>¡Viaje Reservado!</h3>
+    <p>Tu reservación ha sido confirmada exitosamente.</p>
+    <p class="email-confirmacion">Recibirás un correo de confirmación a:<br><strong>{{ emailConfirmacion }}</strong></p>
+    <div class="modal-actions">
+      <button class="btn-modal-success" (click)="cerrarModalReservaExitosa()">Ver mis viajes</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Reserva Error -->
+<div class="modal-overlay" *ngIf="mostrarModalErrorReserva">
+  <div class="modal-content modal-error">
+    <div class="modal-icon">❌</div>
+    <h3>Error en la Reservación</h3>
+    <p>No se pudo completar tu reservación. Por favor intenta nuevamente.</p>
+    <div class="modal-actions">
+      <button class="btn-modal-error" (click)="cerrarModalErrorReserva()">Cerrar</button>
+    </div>
+  </div>
+</div>

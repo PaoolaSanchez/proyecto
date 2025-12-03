@@ -1,0 +1,10 @@
+[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "npm run serve:ssr:TravelPin"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+
+[nixpacks]
+pkgs = ["nodejs-18_x", "python3"]

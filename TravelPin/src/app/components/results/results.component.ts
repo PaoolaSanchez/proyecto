@@ -1,6 +1,8 @@
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { DestinosService, DestinoCompleto } from '../../services/destinos.service';
+//import { ApiService } from '../services/api.service';
 
 interface DestinoResultado {
   id: number;
@@ -17,6 +19,10 @@ interface DestinoResultado {
   destacados?: string[];
   presupuestoEstimado?: string;
   mejorEpoca?: string;
+  // Campos del backend
+  queHacer?: string[];
+  consejos?: string[];
+  queLlevar?: string[];
 }
 
 interface Preferencias {
@@ -58,6 +64,8 @@ interface RespuestaIA {
 export class ResultsComponent implements OnInit {
   @Input() respuestasEncuesta?: Preferencias;
   @Output() verDetalle = new EventEmitter<number>();
+  @Output() refinarBusqueda = new EventEmitter<void>();
+  @Output() verTodosDestinos = new EventEmitter<void>();
 
   perfilUsuario: PerfilUsuario = {
     titulo: 'Tu perfil de viajero',
@@ -69,110 +77,79 @@ export class ResultsComponent implements OnInit {
   currentTab: string = 'inicio';
   cargandoIA: boolean = false;
   errorIA: boolean = false;
+  errorMensaje: string = ''; 
 
   presupuestoLabel: string = '';
   tipoLabel: string = '';
 
-  todosLosDestinos: DestinoResultado[] = [
-    {
-      id: 1,
-      nombre: 'Machu Picchu',
-      pais: 'Perú',
-      categoria: 'Aventura',
-      imagen: 'https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=600',
-      rating: 4.7,
-      esFavorito: true,
-      precio: 120,
-      matchPercentage: 0
-    },
-    {
-      id: 2,
-      nombre: 'Costa Rica',
-      pais: 'Costa Rica',
-      categoria: 'Naturaleza',
-      imagen: 'https://images.unsplash.com/photo-1606664515524-ed2f786a0bd6?w=600',
-      rating: 4.9,
-      esFavorito: true,
-      precio: 95,
-      matchPercentage: 0
-    },
-    {
-      id: 3,
-      nombre: 'Maldivas',
-      pais: 'Maldivas',
-      categoria: 'Lujo',
-      imagen: 'https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=600',
-      rating: 5.0,
-      esFavorito: false,
-      precio: 350,
-      matchPercentage: 0
-    },
-    {
-      id: 4,
-      nombre: 'París',
-      pais: 'Francia',
-      categoria: 'Cultural',
-      imagen: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=600',
-      rating: 4.8,
-      esFavorito: false,
-      precio: 180,
-      matchPercentage: 0
-    },
-    {
-      id: 5,
-      nombre: 'Tokio',
-      pais: 'Japón',
-      categoria: 'Ciudad',
-      imagen: 'https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=600',
-      rating: 4.9,
-      esFavorito: false,
-      precio: 200,
-      matchPercentage: 0
-    },
-    {
-      id: 6,
-      nombre: 'Bali',
-      pais: 'Indonesia',
-      categoria: 'Playa',
-      imagen: 'https://images.unsplash.com/photo-1537996194471-e657df975ab4?w=600',
-      rating: 4.8,
-      esFavorito: true,
-      precio: 85,
-      matchPercentage: 0
-    },
-    {
-      id: 7,
-      nombre: 'Santorini',
-      pais: 'Grecia',
-      categoria: 'Playa',
-      imagen: 'https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?w=600',
-      rating: 4.9,
-      esFavorito: false,
-      precio: 160,
-      matchPercentage: 0
-    },
-    {
-      id: 8,
-      nombre: 'Patagonia',
-      pais: 'Argentina',
-      categoria: 'Aventura',
-      imagen: 'https://images.unsplash.com/photo-1543519662-eadad632a65f?w=600',
-      rating: 4.8,
-      esFavorito: false,
-      precio: 140,
-      matchPercentage: 0
-    }
-  ];
+  todosLosDestinos: DestinoResultado[] = [];
 
-  constructor(private http: HttpClient) {}
+  // Datos completos de destinos del backend
+  destinosCompletos: DestinoCompleto[] = [];
 
+  constructor(private http: HttpClient, private destinosService: DestinosService) {}
+//constructor(private apiService: ApiService) {}
   ngOnInit(): void {
-    if (this.respuestasEncuesta) {
-      this.calcularRecomendaciones();
-      this.calcularLabels();
-      // Llamar a la IA después de calcular recomendaciones básicas
-      this.generarRecomendacionesConIA();
-    }
+    // Cargar destinos desde backend y mapearlos al formato de resultados
+    this.destinosService.cargarDestinosDesdeBackend().subscribe({
+      next: (destinos: DestinoCompleto[]) => {
+        // Guardar destinos completos para usar con IA
+        this.destinosCompletos = destinos;
+        
+        this.todosLosDestinos = destinos.map(d => ({
+          id: d.id,
+          nombre: d.nombre,
+          pais: d.pais,
+          categoria: this.normalizarCategoria(d.categoria || 'General'),
+          imagen: d.imagenPrincipal || d.imagen || '',
+          rating: d.rating || 4.5,
+          esFavorito: false,
+          precio: this.estimarPrecio(d),
+          matchPercentage: 0,
+          queHacer: d.queHacer || [],
+          consejos: d.consejos || [],
+          queLlevar: d.queEllevar || []
+        }));
+
+        if (this.respuestasEncuesta) {
+          this.calcularRecomendaciones();
+          this.calcularLabels();
+          this.generarRecomendacionesConIA();
+        }
+      },
+      error: () => {
+        // Si falla la carga, mantener la lista vacía y seguir con la lógica de IA si aplica
+        if (this.respuestasEncuesta) {
+          this.calcularRecomendaciones();
+          this.calcularLabels();
+          this.generarRecomendacionesConIA();
+        }
+      }
+    });
+  }
+
+  // Normalizar categoría del backend
+  private normalizarCategoria(categoria: string): string {
+    const mapeo: { [key: string]: string } = {
+      'playa': 'Playa',
+      'ciudad': 'Ciudad',
+      'cultura': 'Cultural',
+      'aventura': 'Aventura',
+      'naturaleza': 'Naturaleza',
+      'lujo': 'Lujo'
+    };
+    return mapeo[categoria.toLowerCase()] || categoria;
+  }
+
+  // Estimar precio basado en datos del destino
+  private estimarPrecio(destino: DestinoCompleto): number {
+    const presupuesto = destino.detallesViaje?.presupuestoPromedio || '';
+    if (presupuesto.includes('5,000') || presupuesto.includes('4,000')) return 250;
+    if (presupuesto.includes('3,000') || presupuesto.includes('2,500')) return 180;
+    if (presupuesto.includes('2,000') || presupuesto.includes('1,800')) return 120;
+    if (presupuesto.includes('1,500') || presupuesto.includes('1,200')) return 90;
+    if (presupuesto.includes('800') || presupuesto.includes('600')) return 60;
+    return 100;
   }
 
   calcularLabels(): void {
@@ -441,61 +418,54 @@ export class ResultsComponent implements OnInit {
   }
 
   private generarDestacados(destino: DestinoResultado): string[] {
+    // Buscar datos reales del destino en la base de datos
+    const destinoCompleto = this.destinosCompletos.find(d => d.id === destino.id);
+    
+    if (destinoCompleto && destinoCompleto.queHacer && destinoCompleto.queHacer.length > 0) {
+      // Usar los datos reales de que_hacer de la base de datos
+      return destinoCompleto.queHacer.slice(0, 3);
+    }
+
+    // Fallback si no hay datos
     const destacadosBase: { [key: string]: string[][] } = {
-      'Machu Picchu': [
-        ['Ciudadela inca del siglo XV', 'Trekking del Camino Inca', 'Vistas espectaculares de montaña'],
-        ['Una de las 7 maravillas del mundo', 'Experiencia arqueológica única', 'Cultura andina viva']
+      'Aventura': [
+        ['Experiencias de adrenalina', 'Deportes extremos', 'Naturaleza salvaje']
       ],
-      'Costa Rica': [
-        ['Biodiversidad excepcional', 'Playas del Caribe y Pacífico', 'Aventura y ecoturismo'],
-        ['Volcanes activos', 'Canopy y tirolesa', 'Vida silvestre abundante']
+      'Playa': [
+        ['Playas paradisíacas', 'Deportes acuáticos', 'Atardeceres espectaculares']
       ],
-      'Maldivas': [
-        ['Resorts overwater de lujo', 'Snorkel y buceo de clase mundial', 'Playas de arena blanca'],
-        ['Aguas cristalinas turquesas', 'Privacidad y exclusividad', 'Spa y wellness']
+      'Cultural': [
+        ['Rica historia', 'Museos y monumentos', 'Gastronomía local']
       ],
-      'París': [
-        ['Torre Eiffel y museos icónicos', 'Gastronomía de clase mundial', 'Arquitectura impresionante'],
-        ['Arte y cultura por doquier', 'Ciudad del amor y el romance', 'Shopping de lujo']
+      'Ciudad': [
+        ['Vida urbana vibrante', 'Compras y entretenimiento', 'Arquitectura impresionante']
       ],
-      'Tokio': [
-        ['Mezcla de tradición y modernidad', 'Gastronomía japonesa auténtica', 'Tecnología de vanguardia'],
-        ['Templos históricos', 'Vida nocturna vibrante', 'Cultura pop y anime']
+      'Naturaleza': [
+        ['Paisajes impresionantes', 'Flora y fauna única', 'Ecoturismo']
       ],
-      'Bali': [
-        ['Templos hindúes impresionantes', 'Playas y surf', 'Terrazas de arroz icónicas'],
-        ['Yoga y retiros wellness', 'Cultura balinesa única', 'Precios accesibles']
-      ],
-      'Santorini': [
-        ['Atardeceres más bellos del mundo', 'Arquitectura blanca y azul', 'Vinos locales excepcionales'],
-        ['Playas volcánicas únicas', 'Pueblos pintorescos', 'Cocina mediterránea']
-      ],
-      'Patagonia': [
-        ['Glaciares imponentes', 'Trekking de nivel mundial', 'Naturaleza prístina'],
-        ['Fauna silvestre única', 'Lagos y montañas', 'Aventura extrema']
+      'Lujo': [
+        ['Servicios premium', 'Experiencias exclusivas', 'Confort excepcional']
       ]
     };
 
-    const opciones = destacadosBase[destino.nombre] || [
+    const opciones = destacadosBase[destino.categoria] || [
       ['Experiencias únicas', 'Cultura local auténtica', 'Paisajes impresionantes']
     ];
     
-    return opciones[Math.floor(Math.random() * opciones.length)];
+    return opciones[0];
   }
 
   private generarDescripcion(destino: DestinoResultado): string {
-    const descripciones: { [key: string]: string } = {
-      'Machu Picchu': 'Antigua ciudadela inca en lo alto de los Andes peruanos, considerada una obra maestra de la arquitectura.',
-      'Costa Rica': 'Paraíso tropical con increíble biodiversidad, perfecto para amantes de la naturaleza y la aventura.',
-      'Maldivas': 'Archipiélago de ensueño con aguas cristalinas y resorts de lujo sobre el agua.',
-      'París': 'La ciudad de la luz, capital del arte, la moda y la gastronomía francesa.',
-      'Tokio': 'Megaciudad fascinante donde la tradición milenaria se encuentra con la tecnología futurista.',
-      'Bali': 'Isla indonesia conocida por sus templos, playas, terrazas de arroz y cultura espiritual.',
-      'Santorini': 'Isla griega icónica famosa por sus pueblos blancos con cúpulas azules y atardeceres espectaculares.',
-      'Patagonia': 'Región de belleza natural extrema con glaciares, montañas y lagos de ensueño.'
-    };
+    // Buscar datos reales del destino en la base de datos
+    const destinoCompleto = this.destinosCompletos.find(d => d.id === destino.id);
+    
+    if (destinoCompleto && destinoCompleto.descripcion) {
+      // Usar la descripción real de la base de datos
+      return destinoCompleto.descripcion;
+    }
 
-    return descripciones[destino.nombre] || `Destino increíble en ${destino.pais} con experiencias únicas que recordarás para siempre.`;
+    // Fallback genérico
+    return `Destino increíble en ${destino.pais} con experiencias únicas que recordarás para siempre.`;
   }
 
   private generarConsejosPersonalizados(): string[] {
@@ -503,7 +473,24 @@ export class ResultsComponent implements OnInit {
 
     if (!this.respuestasEncuesta) return consejos;
 
-    // Consejo de presupuesto
+    // Buscar consejos reales de los destinos recomendados
+    const consejosReales: string[] = [];
+    this.destinosRecomendados.forEach(destino => {
+      const destinoCompleto = this.destinosCompletos.find(d => d.id === destino.id);
+      if (destinoCompleto && destinoCompleto.consejos && destinoCompleto.consejos.length > 0) {
+        // Agregar 1-2 consejos de cada destino recomendado
+        consejosReales.push(...destinoCompleto.consejos.slice(0, 2));
+      }
+    });
+
+    // Si tenemos consejos reales, usarlos
+    if (consejosReales.length > 0) {
+      // Mezclar y seleccionar los más relevantes
+      const consejosUnicos = [...new Set(consejosReales)];
+      return consejosUnicos.slice(0, 3);
+    }
+
+    // Fallback: Consejos genéricos basados en preferencias
     if (this.respuestasEncuesta.presupuesto === 'economico') {
       consejos.push('Reserva con anticipación para obtener las mejores tarifas y considera viajar en temporada baja');
     } else if (this.respuestasEncuesta.presupuesto === 'lujo') {
@@ -512,7 +499,6 @@ export class ResultsComponent implements OnInit {
       consejos.push('Combina hoteles boutique con algunas experiencias premium para el equilibrio perfecto');
     }
 
-    // Consejo de actividades
     if (this.respuestasEncuesta.actividades.includes('deportes-extremos')) {
       consejos.push('Contrata un seguro de viaje que cubra actividades de aventura y deportes extremos');
     }
@@ -523,7 +509,6 @@ export class ResultsComponent implements OnInit {
       consejos.push('Dedica tiempo suficiente para disfrutar sin prisas, menos es más cuando buscas relajarte');
     }
 
-    // Consejo general
     consejos.push('Descarga mapas offline y aprende algunas frases básicas del idioma local antes de viajar');
 
     return consejos.slice(0, 3);
@@ -617,5 +602,37 @@ export class ResultsComponent implements OnInit {
     if (percentage >= 60) return 'Bueno';
     if (percentage >= 40) return 'Moderado';
     return 'Bajo';
+  }
+
+  getCategoryClass(categoria: string): string {
+    const categoriaLower = categoria?.toLowerCase() || '';
+    const claseMap: { [key: string]: string } = {
+      'playa': 'category-playa',
+      'ciudad': 'category-ciudad',
+      'cultural': 'category-cultural',
+      'aventura': 'category-aventura',
+      'naturaleza': 'category-naturaleza',
+      'lujo': 'category-lujo',
+      'montaña': 'category-montana',
+      'montana': 'category-montana'
+    };
+    return claseMap[categoriaLower] || 'category-default';
+  }
+  reintentar(): void {
+    this.errorIA = false;
+    this.errorMensaje = '';
+    this.generarRecomendacionesConIA();
+  }
+
+  // Método para refinar búsqueda - volver a la encuesta
+  onRefinarBusqueda(): void {
+    console.log('Refinando búsqueda...');
+    this.refinarBusqueda.emit();
+  }
+
+  // Método para ver todos los destinos
+  onVerTodosDestinos(): void {
+    console.log('Ver todos los destinos...');
+    this.verTodosDestinos.emit();
   }
 }

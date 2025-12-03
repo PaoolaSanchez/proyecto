@@ -208,12 +208,12 @@
   color: #a0aec0;
 }
 
+/* Bottom Navigation */
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 428px;
+  left: 0;
+  right: 0;
   width: 100%;
   background: white;
   display: flex;
@@ -239,7 +239,8 @@
 }
 
 .nav-item:hover {
-  background-color: #f7fafc;
+  background-color: #f0f1ff;
+  color: #667eea;
 }
 
 .nav-item.active {
@@ -249,6 +250,12 @@
 
 .nav-icon {
   font-size: 22px;
+  transition: transform 0.2s ease;
+}
+
+.nav-item:hover .nav-icon,
+.nav-item.active .nav-icon {
+  transform: scale(1.1);
 }
 
 .nav-label {
@@ -256,4 +263,20 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Responsive bottom-nav */
+@media (min-width: 768px) {
+  .bottom-nav {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav {
+    max-width: 800px;
+  }
 }

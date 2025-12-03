@@ -1,6 +1,6 @@
 /* Container */
 .trips-container {
-  max-width: 428px;
+  max-width: 100%;
   margin: 0 auto;
   background-color: #f8f9fa;
   min-height: 100vh;
@@ -85,6 +85,8 @@
 /* Main Content */
 .trips-content {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 
@@ -134,9 +136,9 @@
 
 /* Trips List */
 .trips-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
 }
 
 /* Trip Card */
@@ -345,9 +347,8 @@
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 428px;
+  left: 0;
+  right: 0;
   width: 100%;
   background: white;
   display: flex;
@@ -373,7 +374,8 @@
 }
 
 .nav-item:hover {
-  background-color: #f7fafc;
+  background-color: #f0f1ff;
+  color: #667eea;
 }
 
 .nav-item.active {
@@ -386,7 +388,8 @@
   transition: transform 0.2s ease;
 }
 
-.nav-item:hover .nav-icon {
+.nav-item:hover .nav-icon,
+.nav-item.active .nav-icon {
   transform: scale(1.1);
 }
 
@@ -395,6 +398,22 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+
+/* Responsive bottom-nav */
+@media (min-width: 768px) {
+  .bottom-nav {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav {
+    max-width: 800px;
+  }
 }
 
 /* Responsive */
@@ -814,4 +833,152 @@
 .btn-empty-create:hover {
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Modal Eliminar Viaje */
+.modal-eliminar-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-eliminar {
+  background: white;
+  border-radius: 24px;
+  padding: 32px 24px;
+  max-width: 340px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideUp 0.4s ease;
+}
+
+.eliminar-icon-container {
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #FF6B6B 0%, #EE5A5A 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px;
+}
+
+.eliminar-emoji {
+  font-size: 32px;
+}
+
+.eliminar-title {
+  font-size: 22px;
+  font-weight: 700;
+  color: #2D3748;
+  margin-bottom: 8px;
+}
+
+.eliminar-viaje-nombre {
+  font-size: 16px;
+  font-weight: 600;
+  color: #667eea;
+  margin-bottom: 12px;
+  padding: 8px 16px;
+  background: #F7FAFC;
+  border-radius: 8px;
+  display: inline-block;
+}
+
+.eliminar-text {
+  font-size: 14px;
+  color: #718096;
+  line-height: 1.5;
+  margin-bottom: 24px;
+}
+
+.eliminar-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.btn-eliminar-cancel,
+.btn-eliminar-confirm {
+  flex: 1;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+}
+
+.btn-eliminar-cancel {
+  background: #F7FAFC;
+  color: #718096;
+  border: 2px solid #E2E8F0;
+}
+
+.btn-eliminar-cancel:hover:not(:disabled) {
+  background: #EDF2F7;
+}
+
+.btn-eliminar-confirm {
+  background: linear-gradient(135deg, #FF6B6B 0%, #EE5A5A 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+}
+
+.btn-eliminar-confirm:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 107, 107, 0.4);
+}
+
+.btn-eliminar-cancel:disabled,
+.btn-eliminar-confirm:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ============== RESPONSIVE ============== */
+@media (max-width: 480px) {
+  .trips-list {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .trips-title {
+    font-size: 24px;
+  }
+
+  .trip-image-container {
+    height: 160px;
+  }
+}
+
+@media (min-width: 768px) {
+  .trips-content {
+    padding: 30px 40px;
+  }
+
+  .title-section {
+    padding: 24px 40px;
+  }
+
+  .trips-title {
+    font-size: 32px;
+  }
+
+  .trip-image-container {
+    height: 200px;
+  }
+
+  .btn-create {
+    padding: 12px 28px;
+    font-size: 15px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .trips-list {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

@@ -1,5 +1,8 @@
 import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { AuthWarningModalComponent } from '../auth-warning-modal/auth-warning-modal.component';
 import { SurveyComponent } from '../survey/survey.component';
 import { ResultsComponent } from '../results/results.component';
 import { DestinationDetailComponent } from '../destination-detail/destination-detail.component';
@@ -26,6 +29,7 @@ interface Destino {
   standalone: true,
   imports: [
     CommonModule, 
+    AuthWarningModalComponent,
     SurveyComponent, 
     ResultsComponent, 
     DestinationDetailComponent, 
@@ -54,20 +58,52 @@ export class HomeComponent implements OnInit {
   viajeSeleccionadoId?: number;
   private isBrowser: boolean;
   mostrarPerfil: boolean = false;
+  mostrarAuthWarning: boolean = false;
 
+  // Inject AuthService and Router for auth checks/navigation
   constructor(
     @Inject(PLATFORM_ID) platformId: Object,
-    private destinosService: DestinosService
+    private destinosService: DestinosService,
+    private authService: AuthService,
+    private router: Router
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
+  private getFavoritosKey(): string {
+    const user = this.authService.getCurrentUser();
+    if (user && user.uid) {
+      return `travelplus_favoritos_${user.uid}`;
+    }
+    return 'travelplus_favoritos';
+  }
+
   ngOnInit(): void {
-    // Cargar destinos desde el servicio
-    this.destinos = this.destinosService.getDestinos();
+    // Cargar destinos desde el servicio (primero desde backend si está disponible)
+    this.destinosService.cargarDestinosDesdeBackend().subscribe({
+      next: (destinos) => {
+        console.log('✅ Destinos cargados del backend:', destinos.length);
+        // Convertir DestinoCompleto a Destino
+        this.destinos = destinos.map(d => ({
+          id: d.id,
+          nombre: d.nombre,
+          pais: d.pais,
+          categoria: d.categoria,
+          imagen: d.imagen,
+          rating: d.rating,
+          esFavorito: d.esFavorito,
+          colorCategoria: d.colorCategoria
+        }));
+        this.cargarFavoritos();
+      },
+      error: (error) => {
+        console.warn('Error cargando destinos del backend, usando caché:', error);
+        this.destinos = this.destinosService.getDestinos();
+        this.cargarFavoritos();
+      }
+    });
     
     if (this.isBrowser) {
-      this.cargarFavoritos();
       this.verificarViajesFinalizados();
       
       // Sincronizar favoritos y verificar viajes cada 2 segundos
@@ -82,7 +118,12 @@ export class HomeComponent implements OnInit {
     if (!this.isBrowser) return;
     
     try {
-      const coleccionesGuardadas = localStorage.getItem('travelplus_colecciones');
+      const user = this.authService.getCurrentUser();
+      const storageKey = user && user.uid 
+        ? `travelplus_colecciones_${user.uid}` 
+        : 'travelplus_colecciones';
+      
+      const coleccionesGuardadas = localStorage.getItem(storageKey);
       if (!coleccionesGuardadas) return;
       
       const colecciones = JSON.parse(coleccionesGuardadas);
@@ -106,7 +147,7 @@ export class HomeComponent implements OnInit {
       });
       
       if (huboActualizacion) {
-        localStorage.setItem('travelplus_colecciones', JSON.stringify(colecciones));
+        localStorage.setItem(storageKey, JSON.stringify(colecciones));
       }
     } catch (error) {
       console.error('Error al verificar viajes finalizados:', error);
@@ -117,7 +158,7 @@ export class HomeComponent implements OnInit {
     if (!this.isBrowser) return;
     
     try {
-      const favoritosGuardados = localStorage.getItem('travelplus_favoritos');
+      const favoritosGuardados = localStorage.getItem(this.getFavoritosKey());
       
       if (favoritosGuardados) {
         const favoritosIds: number[] = JSON.parse(favoritosGuardados);
@@ -141,7 +182,7 @@ export class HomeComponent implements OnInit {
         .filter(d => d.esFavorito)
         .map(d => d.id);
       
-      localStorage.setItem('travelplus_favoritos', JSON.stringify(favoritosIds));
+      localStorage.setItem(this.getFavoritosKey(), JSON.stringify(favoritosIds));
       console.log('Favoritos guardados:', favoritosIds);
     } catch (error) {
       console.error('Error al guardar favoritos:', error);
@@ -149,11 +190,19 @@ export class HomeComponent implements OnInit {
   }
 
   toggleFavorito(destino: Destino): void {
+    // Si no está autenticado, redirigir a login
+    if (!this.authService.isLogged()) {
+      // Guardar intención para redirigir después (opcional)
+      alert('Debes iniciar sesión o crear una cuenta para agregar a favoritos');
+      this.router.navigate(['/login'], { queryParams: { redirect: this.router.url } });
+      return;
+    }
+
     destino.esFavorito = !destino.esFavorito;
-    
+
     // Actualizar en el servicio también
     this.destinosService.actualizarFavorito(destino.id, destino.esFavorito);
-    
+
     this.guardarFavoritos();
     console.log(`Destino ${destino.nombre} favorito: ${destino.esFavorito}`);
   }
@@ -163,6 +212,30 @@ export class HomeComponent implements OnInit {
     this.destinoSeleccionadoId = destino.id;
     this.mostrarDetalle = true;
     this.mostrarResultados = false;
+  }
+
+  navigateToLogin(): void {
+    this.router.navigate(['/login'], { queryParams: { redirect: this.router.url } });
+  }
+
+  // Navegación a registro
+  navigateToSignup(): void {
+    // Por ahora, redirigir a login (puedes crear una ruta /register más adelante)
+    this.router.navigate(['/login'], { queryParams: { redirect: this.router.url } });
+  }
+
+  closeAuthWarning(): void {
+    this.mostrarAuthWarning = false;
+  }
+
+  onAuthWarningLogin(): void {
+    this.mostrarAuthWarning = false;
+    this.navigateToLogin();
+  }
+
+  onAuthWarningSignup(): void {
+    this.mostrarAuthWarning = false;
+    this.navigateToSignup();
   }
 
   encontrarDestino(): void {
@@ -193,7 +266,28 @@ export class HomeComponent implements OnInit {
     this.mostrarDetalle = true;
   }
 
+  // Método para refinar búsqueda - volver a la encuesta
+  refinarBusqueda(): void {
+    console.log('Refinando búsqueda - volviendo a encuesta');
+    this.mostrarResultados = false;
+    this.mostrarEncuesta = true;
+  }
+
+  // Método para ver todos los destinos desde resultados
+  verTodosDestinosDesdeResultados(): void {
+    console.log('Ver todos los destinos');
+    this.mostrarResultados = false;
+    this.mostrarExplorar = true;
+    this.currentTab = 'explorar';
+  }
+
   cambiarTab(tab: string): void {
+    // Verificar autenticación para pestañas protegidas
+    if ((tab === 'viajes' || tab === 'perfil' || tab === 'favoritos') && !this.authService.isLogged()) {
+      this.mostrarAuthWarning = true;
+      return;
+    }
+
     this.currentTab = tab;
     console.log('Tab seleccionado:', tab);
     
@@ -324,7 +418,12 @@ export class HomeComponent implements OnInit {
     if (!this.isBrowser) return 0;
     
     try {
-      const coleccionesGuardadas = localStorage.getItem('travelplus_colecciones');
+      const user = this.authService.getCurrentUser();
+      const storageKey = user && user.uid 
+        ? `travelplus_colecciones_${user.uid}` 
+        : 'travelplus_colecciones';
+      
+      const coleccionesGuardadas = localStorage.getItem(storageKey);
       
       if (coleccionesGuardadas) {
         const colecciones = JSON.parse(coleccionesGuardadas);
@@ -347,5 +446,9 @@ export class HomeComponent implements OnInit {
 
   get destinosFavoritos(): Destino[] {
     return this.destinos.filter(d => d.esFavorito);
+  }
+
+  isLoggedIn(): boolean {
+    return this.authService.isLogged();
   }
 }

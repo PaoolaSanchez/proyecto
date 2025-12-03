@@ -1,6 +1,6 @@
 /* Container */
 .favorites-container {
-  max-width: 428px;
+  max-width: 100%;
   margin: 0 auto;
   background-color: #ffffff;
   min-height: 100vh;
@@ -44,6 +44,8 @@
 /* Main Content */
 .favorites-content {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 /* Title Section */
@@ -91,8 +93,8 @@
 /* Favorites Grid (Recientes) */
 .favorites-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 20px;
 }
 
 .favorite-card {
@@ -228,11 +230,43 @@
 
 .item-category {
   font-size: 11px;
-  color: #667eea;
-  background: #edf2f7;
-  padding: 4px 8px;
+  padding: 4px 10px;
   border-radius: 8px;
   font-weight: 600;
+  color: white;
+}
+
+/* Colores por categoría */
+.item-category.category-playa {
+  background: linear-gradient(135deg, #00b4db 0%, #0083b0 100%);
+}
+
+.item-category.category-ciudad {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.item-category.category-cultural {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.item-category.category-aventura {
+  background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+}
+
+.item-category.category-naturaleza {
+  background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.item-category.category-lujo {
+  background: linear-gradient(135deg, #ba8b02 0%, #f5c432 100%);
+}
+
+.item-category.category-montana {
+  background: linear-gradient(135deg, #8e9eab 0%, #557c93 100%);
+}
+
+.item-category.category-default {
+  background: #607D8B;
 }
 
 .btn-remove {
@@ -300,9 +334,8 @@
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  max-width: 428px;
+  left: 0;
+  right: 0;
   width: 100%;
   background: white;
   display: flex;
@@ -328,7 +361,8 @@
 }
 
 .nav-item:hover {
-  background-color: #f7fafc;
+  background-color: #f0f1ff;
+  color: #667eea;
 }
 
 .nav-item.active {
@@ -341,7 +375,8 @@
   transition: transform 0.2s ease;
 }
 
-.nav-item:hover .nav-icon {
+.nav-item:hover .nav-icon,
+.nav-item.active .nav-icon {
   transform: scale(1.1);
 }
 
@@ -352,13 +387,30 @@
   letter-spacing: 0.5px;
 }
 
+/* Responsive bottom-nav */
+@media (min-width: 768px) {
+  .bottom-nav {
+    max-width: 600px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-radius: 20px 20px 0 0;
+  }
+}
+
+@media (min-width: 1024px) {
+  .bottom-nav {
+    max-width: 800px;
+  }
+}
+
 /* Responsive */
-@media (max-width: 380px) {
+@media (max-width: 480px) {
   .favorites-title {
     font-size: 24px;
   }
 
   .favorites-grid {
+    grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
 
@@ -367,9 +419,30 @@
   }
 }
 
-@media (min-width: 429px) {
-  .favorites-container {
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+@media (min-width: 768px) {
+  .favorites-content {
+    padding: 30px 40px;
+  }
+
+  .favorites-title {
+    font-size: 32px;
+  }
+
+  .card-image-container {
+    height: 180px;
+  }
+
+  .favorites-grid {
+    gap: 24px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .favorites-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .card-image-container {
+    height: 200px;
   }
 }

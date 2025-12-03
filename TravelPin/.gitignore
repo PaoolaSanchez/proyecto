@@ -41,3 +41,19 @@ __screenshots__/
 # System files
 .DS_Store
 Thumbs.db
+
+# ========== PRODUCCIÓN ==========
+# Base de datos (no subir datos)
+*.db
+*.sqlite
+*.sqlite3
+/travelpin-backend/BDTravelPin.db
+
+# Variables de entorno (IMPORTANTE)
+.env
+.env.local
+.env.production
+/travelpin-backend/.env
+
+# Backups locales
+/travelpin-backend/backups/
