@@ -1,0 +1,137 @@
+<div class="login-agencia-page">
+  <div class="login-container">
+    <div class="login-card">
+      <button class="btn-back" (click)="irInicio()">
+        ← Volver al inicio
+      </button>
+      
+      <div class="logo-section">
+        <span class="logo-icon">🏢</span>
+        <h1>{{ modoRegistro ? 'Registra tu Agencia' : 'Panel de Agencias' }}</h1>
+        <p>{{ modoRegistro ? 'Crea una cuenta para gestionar tus paquetes de viaje' : 'Inicia sesión para gestionar tus paquetes de viaje' }}</p>
+      </div>
+      
+      <div class="error-message" *ngIf="error">
+        ⚠️ {{ error }}
+      </div>
+      
+      <!-- FORMULARIO LOGIN -->
+      <form *ngIf="!modoRegistro" (ngSubmit)="login()" class="login-form">
+        <div class="form-group">
+          <label>📧 Email</label>
+          <input 
+            type="email" 
+            [(ngModel)]="loginData.email" 
+            name="email"
+            required
+            placeholder="tu@agencia.com"
+            [disabled]="cargando">
+        </div>
+        
+        <div class="form-group">
+          <label>🔒 Contraseña</label>
+          <input 
+            type="password" 
+            [(ngModel)]="loginData.password" 
+            name="password"
+            required
+            placeholder="••••••••"
+            [disabled]="cargando">
+        </div>
+        
+        <button type="submit" class="btn-primary" [disabled]="cargando">
+          <span *ngIf="!cargando">Iniciar Sesión</span>
+          <span *ngIf="cargando">Cargando...</span>
+        </button>
+        
+        <div class="login-footer">
+          <p>¿No tienes cuenta? <a (click)="toggleModoRegistro()">Registra tu agencia</a></p>
+        </div>
+      </form>
+      
+      <!-- FORMULARIO REGISTRO -->
+      <form *ngIf="modoRegistro" (ngSubmit)="registro()" class="login-form">
+        <div class="form-group">
+          <label>🏢 Nombre de la Agencia *</label>
+          <input 
+            type="text" 
+            [(ngModel)]="registroData.nombre" 
+            name="nombre"
+            required
+            placeholder="Mi Agencia de Viajes"
+            [disabled]="cargando">
+        </div>
+        
+        <div class="form-group">
+          <label>📧 Email *</label>
+          <input 
+            type="email" 
+            [(ngModel)]="registroData.email" 
+            name="email"
+            required
+            placeholder="contacto@miagencia.com"
+            [disabled]="cargando">
+        </div>
+        
+        <div class="form-group">
+          <label>🔒 Contraseña *</label>
+          <input 
+            type="password" 
+            [(ngModel)]="registroData.password" 
+            name="password"
+            required
+            placeholder="Mínimo 6 caracteres"
+            [disabled]="cargando">
+        </div>
+        
+        <div class="form-group">
+          <label>📝 Descripción</label>
+          <textarea 
+            [(ngModel)]="registroData.descripcion" 
+            name="descripcion"
+            placeholder="Cuéntanos sobre tu agencia..."
+            rows="3"
+            [disabled]="cargando"></textarea>
+        </div>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label>🎨 Logo (Emoji)</label>
+            <input 
+              type="text" 
+              [(ngModel)]="registroData.logo" 
+              name="logo"
+              placeholder="🏢"
+              [disabled]="cargando">
+          </div>
+          
+          <div class="form-group">
+            <label>📞 Teléfono</label>
+            <input 
+              type="text" 
+              [(ngModel)]="registroData.contacto" 
+              name="contacto"
+              placeholder="555-1234"
+              [disabled]="cargando">
+          </div>
+        </div>
+        
+        <button type="submit" class="btn-primary" [disabled]="cargando">
+          <span *ngIf="!cargando">Registrar Agencia</span>
+          <span *ngIf="cargando">Registrando...</span>
+        </button>
+        
+        <div class="login-footer">
+          <p>¿Ya tienes cuenta? <a (click)="toggleModoRegistro()">Inicia sesión</a></p>
+        </div>
+      </form>
+      
+      <!-- CREDENCIALES DE DEMO -->
+      <div class="demo-credentials" *ngIf="!modoRegistro">
+        <p class="demo-title">🧪 Agencias de demo:</p>
+        <p>📧 paradiso&#64;viajes.com</p>
+        <p>🔑 password123</p>
+      </div>
+    </div>
+  </div>
+</div>
