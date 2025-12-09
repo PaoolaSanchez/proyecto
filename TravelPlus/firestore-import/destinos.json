@@ -1,0 +1,180 @@
+{
+  "kioto_japon": {
+    "title": "Kioto, Japón",
+    "description": "La antigua capital de Japón te transporta en el tiempo con sus templos dorados, jardines zen y barrios de geishas. Una experiencia cultural única donde la tradición convive con la modernidad.",
+    "country": "Japón",
+    "city": "Kioto",
+    "category": "cultura",
+    "price_level": "medio",
+    "image_url": "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?w=500&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1528360983277-13d401cdc186?w=500&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1545569341-9eb8b30979d9?w=500&h=500&fit=crop"
+    ],
+    "rating": 4.9,
+    "best_season": "Marzo - Mayo",
+    "duration": "4-7 días",
+    "highlights": [
+      "Templo Kinkaku-ji",
+      "Bosque de bambú",
+      "Distrito de Gion",
+      "Ceremonia del té"
+    ],
+    "budget_estimate": "$80-150 por día",
+    "latitude": 35.0116,
+    "longitude": 135.7681
+  },
+  "machu_picchu_peru": {
+    "title": "Machu Picchu, Perú",
+    "description": "La ciudadela inca perdida en las nubes de los Andes peruanos. Esta maravilla del mundo te desafía con una caminata épica y te recompensa con vistas que quitan el aliento.",
+    "country": "Perú",
+    "city": "Cuzco",
+    "category": "aventura",
+    "price_level": "medio",
+    "image_url": "https://images.unsplash.com/photo-1587595431973-160d0d94add1?w=500&h=750&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1526392060635-9d6019884377?w=500&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1580735569429-4b3bb51c6d3b?w=500&h=500&fit=crop"
+    ],
+    "rating": 4.7,
+    "best_season": "Mayo - Septiembre",
+    "duration": "2-4 días",
+    "highlights": [
+      "Camino del Inca",
+      "Huayna Picchu",
+      "Valle Sagrado",
+      "Cultura inca"
+    ],
+    "budget_estimate": "$60-120 por día",
+    "latitude": -13.1631,
+    "longitude": -72.545
+  },
+  "maldivas_lujo": {
+    "title": "Maldivas",
+    "description": "Paraíso tropical de aguas cristalinas y arenas blancas como la nieve. Las Maldivas ofrecen la experiencia de lujo definitiva con bungalows sobre el agua y vida marina espectacular.",
+    "country": "Maldivas",
+    "city": "Masculino",
+    "category": "lujo",
+    "price_level": "lujo",
+    "image_url": "https://images.unsplash.com/photo-1514282401047-d79a71a590e8?w=500&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1573843981267-be1999ff37cd?w=500&h=700&fit=crop",
+      "https://images.unsplash.com/photo-1582719508461-905c673771fd?w=500&h=500&fit=crop"
+    ],
+    "rating": 4.9,
+    "best_season": "Noviembre - Abril",
+    "duration": "5-10 días",
+    "highlights": [
+      "Bungalows sobre el agua",
+      "Snorkel y buceo",
+      "Spas de lujo",
+      "Vida marina"
+    ],
+    "budget_estimate": "$400-1000+ por día",
+    "latitude": 4.1755,
+    "longitude": 73.5824
+  },
+  "torres_del_paine_chile": {
+    "title": "Torres del Paine, Chile",
+    "description": "Paisajes dramáticos de montañas, glaciares y lagos turquesa en la Patagonia chilena. Un destino para los amantes de la naturaleza y el trekking más extremo.",
+    "country": "Chile",
+    "city": "Puerto Natales",
+    "category": "naturaleza",
+    "price_level": "medio",
+    "image_url": "https://images.unsplash.com/photo-1544737151-6e4b0c3b3ad2?w=500&h=800&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=500&h=600&fit=crop",
+      "https://images.unsplash.com/photo-1559827260-dc66d52bef19?w=500&h=500&fit=crop"
+    ],
+    "rating": 4.6,
+    "best_season": "Octubre - Marzo",
+    "duration": "3-7 días",
+    "highlights": [
+      "Circuito W",
+      "Glaciar Grey",
+      "Torres del Paine",
+      "Fauna patagónica"
+    ],
+    "budget_estimate": "$70-140 por día",
+    "latitude": -50.9419,
+    "longitude": -73.0768
+  },
+  "paris_francia": {
+    "title": "París, Francia",
+    "description": "La Ciudad de la Luz, sinónimo de romance, arte y elegancia. París cautiva con sus amplios bulevares, arquitectura haussmanianna, museos de clase mundial y una gastronomía refinada.",
+    "country": "Francia",
+    "city": "París",
+    "category": "cultura",
+    "price_level": "alto",
+    "image_url": "https://images.unsplash.com/photo-1431274172761-fca41d930114?w=500&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1502602898536-47ad22581b52?w=500&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1549144511-f099e773c147?w=500&h=500&fit=crop"
+    ],
+    "rating": 4.5,
+    "best_season": "Abril - Junio, Septiembre - Octubre",
+    "duration": "4-7 días",
+    "highlights": [
+      "Torre Eiffel y Campos Elíseos",
+      "Museo del Louvre y Mona Lisa",
+      "Catedral de Notre-Dame",
+      "Barrio de Montmartre y Sacré-Cœur",
+      "Crucero por el Río Sena"
+    ],
+    "budget_estimate": "$150-350 por día",
+    "latitude": 48.8566,
+    "longitude": 2.3522
+  },
+  "tokio_japon": {
+    "title": "Tokio, Japón",
+    "description": "La vibrante capital de Japón donde la tradición milenaria se encuentra con la tecnología futurista. Desde templos serenos hasta rascacielos iluminados con neón, Tokio ofrece una experiencia cultural única.",
+    "country": "Japón",
+    "city": "Tokio",
+    "category": "ciudad",
+    "price_level": "alto",
+    "image_url": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?w=500&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1613952119611-41968332f85e?w=500&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1542051841857-5f90071e7989?w=500&h=500&fit=crop"
+    ],
+    "rating": 4.7,
+    "best_season": "Marzo - Mayo, Septiembre - Noviembre",
+    "duration": "5-8 días",
+    "highlights": [
+      "Templo Senso-ji en Asakusa",
+      "Cruce de Shibuya y distrito de Harajuku",
+      "Mercado de pescado de Tsukiji",
+      "Jardines del Palacio Imperial",
+      "Torre de Tokio y Tokyo Skytree"
+    ],
+    "budget_estimate": "$200-400 por día",
+    "latitude": 35.6895,
+    "longitude": 139.6917
+  },
+  "bali_indonesia": {
+    "title": "Bali, Indonesia",
+    "description": "La Isla de los Dioses, un paraíso tropical conocido por sus templos hindúes, terrazas de arroz esmeraldas, playas doradas y una cultura espiritual profunda.",
+    "country": "Indonesia",
+    "city": "Bali",
+    "category": "naturaleza",
+    "price_level": "bajo",
+    "image_url": "https://images.unsplash.com/photo-1537953773345-d172ccf13cf1?w=500&h=600&fit=crop",
+    "gallery": [
+      "https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?w=500&h=400&fit=crop",
+      "https://images.unsplash.com/photo-1555400113-7c2dbee9ad99?w=500&h=500&fit=crop"
+    ],
+    "rating": 4.6,
+    "best_season": "Abril - Octubre",
+    "duration": "7-10 días",
+    "highlights": [
+      "Terrazas de arroz de Tegallalang",
+      "Templo Tanah Lot sobre el mar",
+      "Volcán Monte Batur al amanecer",
+      "Playa de Seminyak y Kuta",
+      "Ubud: centro cultural y espiritual"
+    ],
+    "budget_estimate": "$30-80 por día",
+    "latitude": -8.4095,
+    "longitude": 115.1889
+  }
+}
