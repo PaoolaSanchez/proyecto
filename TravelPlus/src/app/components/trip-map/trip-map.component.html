@@ -1,0 +1,87 @@
+<div class="map-container">
+  <!-- Header -->
+  <header class="map-header">
+    <button class="back-btn" (click)="volverAtras()">
+      ←
+    </button>
+    <div class="header-info">
+      <h1 class="map-title">Mapa del Viaje</h1>
+      <p class="map-subtitle">{{ nombreViaje }}</p>
+    </div>
+  </header>
+
+  <!-- Map -->
+  <div id="map" #mapContainer class="map-view"></div>
+
+  <!-- Destinos List -->
+  <div class="destinos-overlay">
+    <h3 class="overlay-title">Destinos ({{ destinos.length }})</h3>
+    
+    <div *ngIf="destinos.length === 0" class="empty-destinos">
+      No hay destinos en el itinerario
+    </div>
+
+    <div class="destinos-list">
+      <div 
+        *ngFor="let destino of destinos; let i = index" 
+        class="destino-card"
+        (click)="centrarEnDestino(destino, i)">
+        <div class="destino-number">{{ i + 1 }}</div>
+        <img [src]="destino.imagen" [alt]="destino.nombre" class="destino-image">
+        <div class="destino-info">
+          <h4 class="destino-name">{{ destino.nombre }}</h4>
+          <p class="destino-country">{{ destino.pais }}</p>
+        </div>
+        <span class="destino-arrow">→</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item" (click)="cambiarTab('inicio')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTab('explorar')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    <button class="nav-item active" (click)="cambiarTab('viajes')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTab('favoritos')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    <button class="nav-item" (click)="cambiarTab('perfil')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
