@@ -1,0 +1,138 @@
+<div class="survey-overlay" (click)="cerrar()">
+  <div class="survey-container" (click)="$event.stopPropagation()">
+    <!-- Header -->
+    <div class="survey-header">
+      <div class="logo-mini">
+        <span class="logo-icon-mini">✈️</span>
+        <span class="logo-text-mini">TravelPlus</span>
+      </div>
+      <button class="close-btn" (click)="cerrar()">✕</button>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+      <div class="progress-bar">
+        <div class="progress-fill" [style.width.%]="getProgreso()"></div>
+      </div>
+      <p class="progress-text">Paso {{ pasoActual }} de {{ totalPasos }}</p>
+    </div>
+
+    <!-- Paso 1: Clima -->
+    <div class="survey-content" *ngIf="pasoActual === 1">
+      <h2 class="question-title">¿Qué clima prefieres?</h2>
+      <p class="question-subtitle">Selecciona todos los que disfrutarías</p>
+
+      <div class="options-grid">
+        <button 
+          *ngFor="let opcion of opcionesClima"
+          class="option-card"
+          [class.selected]="respuestas.clima === opcion.id"
+          (click)="seleccionarClima(opcion.id)">
+          <span class="option-icon">{{ opcion.icono }}</span>
+          <span class="option-name">{{ opcion.nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Paso 2: Presupuesto -->
+    <div class="survey-content" *ngIf="pasoActual === 2">
+      <h2 class="question-title">¿Cuál es tu presupuesto de viaje?</h2>
+      <p class="question-subtitle">Selecciona el rango que mejor se ajuste</p>
+
+      <div class="options-list">
+        <button 
+          *ngFor="let opcion of opcionesPresupuesto"
+          class="option-list-item"
+          [class.selected]="respuestas.presupuesto === opcion.id"
+          (click)="seleccionarPresupuesto(opcion.id)">
+          <div class="radio-circle">
+            <div class="radio-dot" *ngIf="respuestas.presupuesto === opcion.id"></div>
+          </div>
+          <div class="option-list-content">
+            <span class="option-list-title">{{ opcion.nombre }}</span>
+            <span class="option-list-subtitle">{{ opcion.rango }}</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Paso 3: Tipo de Destino -->
+    <div class="survey-content" *ngIf="pasoActual === 3">
+      <h2 class="question-title">¿Qué tipo de destino prefieres?</h2>
+      <p class="question-subtitle">Selecciona todos los que te interesen</p>
+
+      <div class="options-grid">
+        <button 
+          *ngFor="let opcion of opcionesTipo"
+          class="option-card"
+          [class.selected]="respuestas.tipo === opcion.id"
+          (click)="seleccionarTipo(opcion.id)">
+          <span class="option-icon">{{ opcion.icono }}</span>
+          <span class="option-name">{{ opcion.nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Paso 4: Estilo de Viaje -->
+    <div class="survey-content" *ngIf="pasoActual === 4">
+      <h2 class="question-title">¿Cuál es tu estilo de viaje?</h2>
+      <p class="question-subtitle">Elige el que mejor te describa</p>
+
+      <div class="options-list">
+        <button 
+          *ngFor="let opcion of opcionesEstilo"
+          class="option-list-item large"
+          [class.selected]="respuestas.estilo === opcion.id"
+          (click)="seleccionarEstilo(opcion.id)">
+          <div class="option-list-content centered">
+            <span class="option-list-title large">{{ opcion.nombre }}</span>
+            <span class="option-list-subtitle">{{ opcion.descripcion }}</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Paso 5: Actividades -->
+    <div class="survey-content" *ngIf="pasoActual === 5">
+      <h2 class="question-title">¿Qué actividades te gustaría hacer?</h2>
+      <p class="question-subtitle">Selecciona todas las que te interesen</p>
+
+      <div class="options-grid">
+        <button 
+          *ngFor="let opcion of opcionesActividades"
+          class="option-card"
+          [class.selected]="isActividadSeleccionada(opcion.id)"
+          (click)="toggleActividad(opcion.id)">
+          <span class="option-icon">{{ opcion.icono }}</span>
+          <span class="option-name">{{ opcion.nombre }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Navigation Buttons -->
+    <div class="survey-footer">
+      <button 
+        class="btn-secondary" 
+        (click)="anterior()"
+        [disabled]="pasoActual === 1">
+        Anterior
+      </button>
+
+      <button 
+        *ngIf="pasoActual < totalPasos"
+        class="btn-primary-survey" 
+        (click)="siguiente()"
+        [disabled]="!puedeAvanzar()">
+        Siguiente
+      </button>
+
+      <button 
+        *ngIf="pasoActual === totalPasos"
+        class="btn-primary-survey" 
+        (click)="finalizarEncuesta()"
+        [disabled]="!puedeAvanzar()">
+        Ver Resultados
+      </button>
+    </div>
+  </div>
+</div>
