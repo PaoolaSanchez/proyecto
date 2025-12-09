@@ -1,0 +1,11 @@
+node_modules
+.angular
+dist
+*.db
+.env
+.git
+.gitignore
+README.md
+*.md
+travelpin-backend/backups
+travelpin-backend/node_modules
