@@ -1,0 +1,194 @@
+<div class="results-container">
+  <!-- Header -->
+  <header class="results-header">
+    <div class="logo">
+      <div class="logo-icon">✈️</div>
+      <span class="logo-text">TravelPlus</span>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  <div *ngIf="cargandoIA" class="loading-overlay">
+    <div class="loading-card">
+      <div class="spinner"></div>
+      <h2>Analizando tus preferencias...</h2>
+      <p>Nuestra IA está creando recomendaciones personalizadas para ti</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <main class="results-content">
+    <!-- Title Section -->
+    <section class="title-section">
+      <h1 class="results-title">Tus destinos perfectos</h1>
+      <p class="results-subtitle">Basándonos en tus preferencias, hemos seleccionado estos destinos especialmente para ti</p>
+    </section>
+
+    <!-- User Profile Card (Mejorado con IA) -->
+    <div class="profile-card" [class.ai-enhanced]="!cargandoIA && !errorIA">
+      <div class="profile-header">
+        <span class="ai-badge" *ngIf="!cargandoIA && !errorIA">✨ Powered by AI</span>
+      </div>
+      <h3 class="profile-title">{{ perfilUsuario.titulo }}</h3>
+      <p class="profile-description">{{ perfilUsuario.descripcion }}</p>
+      <div class="profile-tags">
+        <span class="tag" *ngIf="presupuestoLabel">
+          {{ presupuestoLabel }}
+        </span>
+        <span class="tag" *ngIf="tipoLabel">
+          {{ tipoLabel }}
+        </span>
+      </div>
+    </div>
+
+    <!-- AI Insights (Consejos personalizados) -->
+    <div class="ai-insights" *ngIf="consejosIA.length > 0">
+      <h3 class="insights-title">💡 Consejos personalizados para ti</h3>
+      <div class="insights-grid">
+        <div class="insight-card" *ngFor="let consejo of consejosIA; let i = index">
+          <span class="insight-number">{{ i + 1 }}</span>
+          <p class="insight-text">{{ consejo }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Destinations Grid (Mejorado con información IA) -->
+    <section class="results-grid">
+      <div class="result-card" *ngFor="let destino of destinosRecomendados">
+        <!-- Image Container -->
+        <div class="result-image-container">
+          <img [src]="destino.imagen" [alt]="destino.nombre" class="result-image">
+          
+          <!-- Category Badge -->
+          <div class="result-category-badge" [ngClass]="getCategoryClass(destino.categoria)">
+            {{ destino.categoria }}
+          </div>
+          
+          <!-- Favorite Button -->
+          <button class="result-favorite-btn" 
+                  [class.active]="destino.esFavorito"
+                  (click)="toggleFavorito(destino)">
+            <span class="heart-icon">{{ destino.esFavorito ? '❤️' : '🤍' }}</span>
+          </button>
+
+          <!-- Match Badge -->
+          <div class="match-badge" [style.background-color]="getMatchColor(destino.matchPercentage)">
+            {{ destino.matchPercentage }}% Match
+          </div>
+        </div>
+
+        <!-- Card Content (Enriquecido con IA) -->
+        <div class="result-card-content">
+          <!-- Rating -->
+          <div class="result-rating">
+            <span class="star-icon">⭐</span>
+            <span class="rating-value">{{ destino.rating }}</span>
+          </div>
+
+          <!-- Destination Info -->
+          <h3 class="result-destination-name">{{ destino.nombre }}</h3>
+          <p class="result-destination-country">📍 {{ destino.pais }}</p>
+
+          <!-- Descripción generada por IA -->
+          <p class="ai-description" *ngIf="destino.descripcionIA">
+            {{ destino.descripcionIA }}
+          </p>
+
+          <!-- Por qué encaja (IA) -->
+          <div class="why-fits" *ngIf="destino.porQueEncaja">
+            <strong class="why-fits-title">Por qué es ideal para ti:</strong>
+            <p class="why-fits-text">{{ destino.porQueEncaja }}</p>
+          </div>
+
+          <!-- Destacados (IA) -->
+          <div class="highlights" *ngIf="destino.destacados && destino.destacados.length > 0">
+            <strong class="highlights-title">Destacados:</strong>
+            <ul class="highlights-list">
+              <li *ngFor="let punto of destino.destacados">{{ punto }}</li>
+            </ul>
+          </div>
+
+          <!-- Action Button -->
+          <button class="btn-ver-mas" (click)="verDetalles(destino)">
+            Más Opciones
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Error State -->
+    <div class="error-message" *ngIf="errorIA">
+      <p>⚠️ {{ errorMensaje || 'No pudimos generar recomendaciones personalizadas con IA, pero aquí están tus mejores opciones basadas en tus preferencias.' }}</p>
+      <button class="btn-retry" (click)="generarRecomendacionesConIA()">Reintentar</button>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="info-section">
+      <p class="info-text">¿Estos destinos no son lo que buscas?</p>
+      <button class="btn-refinar" (click)="onRefinarBusqueda()">Refinar búsqueda</button>
+      <button class="btn-ver-todos" (click)="onVerTodosDestinos()">Ver todos los destinos</button>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item" 
+            [class.active]="currentTab === 'inicio'"
+            (click)="cambiarTab('inicio')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'explorar'"
+            (click)="cambiarTab('explorar')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'viajes'"
+            (click)="cambiarTab('viajes')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'favoritos'"
+            (click)="cambiarTab('favoritos')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'perfil'"
+            (click)="cambiarTab('perfil')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
