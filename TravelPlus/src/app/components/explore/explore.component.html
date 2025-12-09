@@ -1,0 +1,192 @@
+<div class="explore-container">
+  <!-- Header -->
+  <header class="explore-header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">✈️</div>
+        <span class="logo-text">TravelPlus</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search Bar -->
+  <div class="search-section">
+    <div class="search-bar">
+      <span class="search-icon">🔍</span>
+      <input 
+        type="text" 
+        class="search-input"
+        placeholder="Buscar destinos, países, categorías..."
+        [(ngModel)]="terminoBusqueda"
+        (input)="buscarDestinos()">
+      <button 
+        *ngIf="terminoBusqueda" 
+        class="clear-btn" 
+        (click)="limpiarBusqueda()">
+        ✕
+      </button>
+    </div>
+  </div>
+
+  <!-- Resultados de búsqueda -->
+  <div class="search-results" *ngIf="mostrarResultados">
+    <div class="results-header">
+      <h3 class="results-title">
+        {{ destinosFiltrados.length }} resultado{{ destinosFiltrados.length !== 1 ? 's' : '' }} 
+        para "{{ terminoBusqueda }}"
+      </h3>
+    </div>
+
+    <!-- Lista de resultados -->
+    <div class="results-grid" *ngIf="destinosFiltrados.length > 0">
+      <div 
+        *ngFor="let destino of destinosFiltrados"
+        class="result-card"
+        (click)="verDetalleDestino(destino.id)">
+        <img [src]="destino.imagen" [alt]="destino.nombre" class="result-image">
+        <div class="result-info">
+          <h4 class="result-name">{{ destino.nombre }}</h4>
+          <p class="result-country">📍 {{ destino.pais }}</p>
+          <div class="result-rating">
+            <span *ngFor="let estrella of getEstrellas(destino.rating)" class="star">
+              {{ estrella }}
+            </span>
+            <span class="rating-value">{{ destino.rating }}</span>
+          </div>
+          <span class="result-category" [ngClass]="getCategoryClass(destino.categoria)">{{ destino.categoria }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Sin resultados -->
+    <div class="no-results" *ngIf="destinosFiltrados.length === 0">
+      <div class="no-results-icon">🔍</div>
+      <h3 class="no-results-title">No encontramos resultados</h3>
+      <p class="no-results-text">
+        No hay destinos que coincidan con "{{ terminoBusqueda }}"
+      </p>
+      <button class="btn-clear-search" (click)="limpiarBusqueda()">
+        Ver todos los destinos
+      </button>
+    </div>
+  </div>
+
+  <!-- Contenido principal - Solo mostrar si NO hay búsqueda activa -->
+  <main class="explore-content" *ngIf="!mostrarResultados">
+    <!-- Título -->
+    <div class="title-section">
+      <h1 class="explore-title">Explora Destinos</h1>
+      <p class="explore-subtitle">Descubre nuevos lugares y experiencias</p>
+    </div>
+
+    <!-- Categorías Populares -->
+    <section class="categories-section">
+      <h2 class="section-title">
+        <span class="section-icon">🔥</span>
+        Categorías Populares
+      </h2>
+
+      <div class="categories-grid">
+        <div 
+          *ngFor="let categoria of categorias"
+          class="category-card"
+          (click)="verCategoria(categoria.nombre)">
+          <img [src]="categoria.imagen" [alt]="categoria.nombre" class="category-image">
+          <div class="category-overlay">
+            <h3 class="category-name">{{ categoria.nombre }}</h3>
+            <p class="category-count">{{ categoria.count }} destinos</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Destinos Destacados -->
+    <section class="featured-section">
+      <h2 class="section-title">
+        <span class="section-icon">⭐</span>
+        Destinos Destacados
+      </h2>
+
+      <div class="featured-grid">
+        <div 
+          *ngFor="let destino of destinos.slice(0, 6)"
+          class="featured-card"
+          (click)="verDetalleDestino(destino.id)">
+          <img [src]="destino.imagen" [alt]="destino.nombre" class="featured-image">
+          <div class="featured-info">
+            <h3 class="featured-name">{{ destino.nombre }}</h3>
+            <p class="featured-country">📍 {{ destino.pais }}</p>
+            <div class="featured-rating">
+              <span *ngFor="let estrella of getEstrellas(destino.rating)" class="star">
+                {{ estrella }}
+              </span>
+              <span class="rating-value">{{ destino.rating }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item" 
+            [class.active]="currentTab === 'inicio'"
+            (click)="navegarTab('inicio')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'explorar'"
+            (click)="navegarTab('explorar')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'viajes'"
+            (click)="navegarTab('viajes')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'favoritos'"
+            (click)="navegarTab('favoritos')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'perfil'"
+            (click)="navegarTab('perfil')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
