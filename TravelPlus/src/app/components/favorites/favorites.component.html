@@ -1,0 +1,148 @@
+<div class="favorites-container">
+  <!-- Header -->
+  <header class="favorites-header">
+    <div class="logo">
+      <div class="logo-icon">✈️</div>
+      <span class="logo-text">TravelPlus</span>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="favorites-content">
+    <!-- Title Section -->
+    <div class="title-section">
+      <h1 class="favorites-title">Mis Favoritos</h1>
+      <p class="favorites-subtitle">Destinos y experiencias guardadas</p>
+    </div>
+
+    <!-- Favoritos Recientes Section -->
+    <section class="section" *ngIf="favoritosRecientes.length > 0">
+      <div class="section-header">
+        <span class="heart-icon">❤️</span>
+        <h2 class="section-title">Favoritos recientes</h2>
+      </div>
+
+      <div class="favorites-grid">
+        <div 
+          *ngFor="let destino of favoritosRecientes"
+          class="favorite-card"
+          (click)="verDetalleDestino(destino.id)">
+          <div class="card-image-container">
+            <img [src]="destino.imagen" [alt]="destino.nombre" class="card-image">
+            <button 
+              class="remove-favorite-btn"
+              (click)="eliminarDeFavoritos(destino, $event)">
+              ❤️
+            </button>
+          </div>
+          <div class="card-info">
+            <h3 class="card-title">{{ destino.nombre }}</h3>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Todos los Favoritos Section -->
+    <section class="section" *ngIf="destinosFavoritos.length > 0">
+      <div class="section-header">
+        <h2 class="section-title">Todos los favoritos ({{ getContadorFavoritos() }})</h2>
+      </div>
+
+      <div class="favorites-list">
+        <div 
+          *ngFor="let destino of destinosFavoritos"
+          class="favorite-item"
+          (click)="verDetalleDestino(destino.id)">
+          <img [src]="destino.imagen" [alt]="destino.nombre" class="item-image">
+          <div class="item-info">
+            <h3 class="item-title">{{ destino.nombre }}</h3>
+            <p class="item-location">📍 {{ destino.pais }}</p>
+            <div class="item-meta">
+              <span class="item-rating">⭐ {{ destino.rating }}</span>
+              <span class="item-category" [ngClass]="getCategoryClass(destino.categoria)">{{ destino.categoria }}</span>
+            </div>
+          </div>
+          <button 
+            class="btn-remove"
+            (click)="eliminarDeFavoritos(destino, $event)">
+            ❤️
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Empty State -->
+    <div class="empty-state" *ngIf="destinosFavoritos.length === 0">
+      <span class="empty-icon">💔</span>
+      <h2 class="empty-title">No tienes favoritos</h2>
+      <p class="empty-text">
+        Explora destinos increíbles y guarda tus favoritos tocando el corazón
+      </p>
+      <button class="btn-explore" (click)="navegarTab('explorar')">
+        Explorar destinos
+      </button>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item" 
+            [class.active]="currentTab === 'inicio'"
+            (click)="navegarTab('inicio')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'explorar'"
+            (click)="navegarTab('explorar')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'viajes'"
+            (click)="navegarTab('viajes')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'favoritos'"
+            (click)="navegarTab('favoritos')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'perfil'"
+            (click)="navegarTab('perfil')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
