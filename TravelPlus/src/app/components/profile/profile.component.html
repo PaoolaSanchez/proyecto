@@ -1,0 +1,276 @@
+<div class="profile-container">
+  <!-- Header -->
+  <header class="profile-header">
+    <div class="header-content">
+      <div class="logo">
+        <div class="logo-icon">✈️</div>
+        <span class="logo-text">TravelPlus</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="profile-content">
+    <!-- User Info Section -->
+    <section class="user-section">
+      <div class="user-avatar">
+        <div class="avatar-circle">
+          {{ usuario.iniciales }}
+        </div>
+      </div>
+      
+      <h2 class="user-name">{{ usuario.nombre }}</h2>
+      <p class="user-email">{{ usuario.email }}</p>
+
+      <!-- Stats -->
+      <div class="user-stats">
+        <div class="stat-item" (click)="navegarTab('favoritos')" style="cursor: pointer;">
+          <div class="stat-icon">❤️</div>
+          <div class="stat-number">{{ usuario.favoritos }}</div>
+          <div class="stat-label">Favoritos</div>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item" (click)="navegarTab('viajes')" style="cursor: pointer;">
+          <div class="stat-icon">🧳</div>
+          <div class="stat-number">{{ usuario.viajes }}</div>
+          <div class="stat-label">Viajes</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Configuration Section -->
+    <section class="config-section">
+      <h3 class="section-title">Configuración</h3>
+
+      <button class="config-option" (click)="abrirEditarPerfil()">
+        <div class="option-icon">
+          <span class="icon-emoji">⚙️</span>
+        </div>
+        <div class="option-content">
+          <h4 class="option-title">Editar Perfil</h4>
+          <p class="option-subtitle">Actualiza tu información personal</p>
+        </div>
+        <span class="option-arrow">›</span>
+      </button>
+    </section>
+
+    <!-- Info Section -->
+    <section class="info-section">
+      <div class="info-box">
+        <h3 class="info-title">¡Gracias por usar TravelPlus!</h3>
+        <p class="info-text">
+          Descubre lugares increíbles y planifica tus próximas aventuras.
+        </p>
+        <p class="info-version">versión 10.0.1</p>
+      </div>
+    </section>
+
+    <!-- Logout Button -->
+    <section class="logout-section">
+      <button class="btn-logout" (click)="cerrarSesion()">
+        <span class="logout-icon">→</span>
+        <span>Cerrar Sesión</span>
+      </button>
+    </section>
+  </main>
+
+  <!-- Modal Editar Perfil -->
+  <div class="modal-overlay" *ngIf="mostrarEditarPerfil" (click)="cerrarEditarPerfil()">
+    <div class="modal-edit-profile" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2 class="modal-title">Editar Perfil</h2>
+        <button class="btn-close-modal" (click)="cerrarEditarPerfil()">✕</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Tabs para perfil y contraseña -->
+        <div class="edit-tabs">
+          <button class="edit-tab" [class.active]="tabEdicion === 'perfil'" (click)="tabEdicion = 'perfil'">
+            📝 Datos Personales
+          </button>
+          <button class="edit-tab" [class.active]="tabEdicion === 'password'" (click)="tabEdicion = 'password'">
+            🔒 Contraseña
+          </button>
+        </div>
+
+        <!-- Tab Datos Personales -->
+        <div *ngIf="tabEdicion === 'perfil'" class="tab-content">
+          <div class="form-group">
+            <label class="form-label">Nombre</label>
+            <input 
+              type="text" 
+              class="form-input"
+              [(ngModel)]="nombreTemporal"
+              placeholder="Tu nombre completo">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input 
+              type="email" 
+              class="form-input"
+              [(ngModel)]="emailTemporal"
+              placeholder="tu@email.com"
+              [disabled]="true">
+            <small class="form-hint">El email no se puede cambiar</small>
+          </div>
+
+          <button class="btn-save-full" (click)="guardarCambiosPerfil()" [disabled]="guardandoPerfil">
+            <span *ngIf="!guardandoPerfil">💾 Guardar Cambios</span>
+            <span *ngIf="guardandoPerfil">⏳ Guardando...</span>
+          </button>
+        </div>
+
+        <!-- Tab Cambiar Contraseña -->
+        <div *ngIf="tabEdicion === 'password'" class="tab-content">
+          <div class="form-group">
+            <label class="form-label">Contraseña Actual</label>
+            <div class="password-input-container">
+              <input 
+                [type]="mostrarPasswordActual ? 'text' : 'password'" 
+                class="form-input"
+                [(ngModel)]="passwordActual"
+                placeholder="Tu contraseña actual">
+              <button type="button" class="btn-toggle-password" (click)="mostrarPasswordActual = !mostrarPasswordActual">
+                {{ mostrarPasswordActual ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Nueva Contraseña</label>
+            <div class="password-input-container">
+              <input 
+                [type]="mostrarPasswordNueva ? 'text' : 'password'" 
+                class="form-input"
+                [(ngModel)]="passwordNueva"
+                placeholder="Mínimo 6 caracteres">
+              <button type="button" class="btn-toggle-password" (click)="mostrarPasswordNueva = !mostrarPasswordNueva">
+                {{ mostrarPasswordNueva ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Confirmar Nueva Contraseña</label>
+            <div class="password-input-container">
+              <input 
+                [type]="mostrarPasswordConfirmar ? 'text' : 'password'" 
+                class="form-input"
+                [(ngModel)]="passwordConfirmar"
+                placeholder="Repite la nueva contraseña">
+              <button type="button" class="btn-toggle-password" (click)="mostrarPasswordConfirmar = !mostrarPasswordConfirmar">
+                {{ mostrarPasswordConfirmar ? '🙈' : '👁️' }}
+              </button>
+            </div>
+          </div>
+
+          <button class="btn-save-full btn-password" (click)="cambiarPassword()" [disabled]="guardandoPassword">
+            <span *ngIf="!guardandoPassword">🔐 Cambiar Contraseña</span>
+            <span *ngIf="guardandoPassword">⏳ Cambiando...</span>
+          </button>
+        </div>
+
+        <!-- Mensaje de estado -->
+        <div *ngIf="mensajeEstado" class="mensaje-estado" [class.error]="esError" [class.success]="!esError">
+          {{ mensajeEstado }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Confirmar Cierre de Sesión -->
+  <div class="modal-overlay modal-confirm-overlay" *ngIf="mostrarModalConfirmLogout" (click)="cancelarLogout()">
+    <div class="modal-confirm" (click)="$event.stopPropagation()">
+      <div class="confirm-icon-container">
+        <span class="confirm-emoji">🚪</span>
+      </div>
+      <h2 class="confirm-title">¿Cerrar sesión?</h2>
+      <p class="confirm-text">¿Estás seguro que deseas cerrar tu sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta.</p>
+      <div class="confirm-buttons">
+        <button class="btn-confirm-cancel" (click)="cancelarLogout()">
+          Cancelar
+        </button>
+        <button class="btn-confirm-logout" (click)="confirmarLogout()">
+          Sí, cerrar sesión
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Cierre de Sesión -->
+  <div class="modal-overlay modal-logout-overlay" *ngIf="mostrarModalLogout">
+    <div class="modal-logout">
+      <div class="logout-icon-container">
+        <span class="logout-emoji">👋</span>
+      </div>
+      <h2 class="logout-title">{{ mensajeLogout }}</h2>
+      <p class="logout-countdown">Redirigiendo en {{ contadorLogout }} segundo{{ contadorLogout !== 1 ? 's' : '' }}...</p>
+      <div class="logout-progress">
+        <div class="logout-progress-bar" [style.width.%]="((3 - contadorLogout) / 3) * 100"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation -->
+  <nav class="bottom-nav">
+    <button class="nav-item" 
+            [class.active]="currentTab === 'inicio'"
+            (click)="navegarTab('inicio')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+          <polyline points="9 22 9 12 15 12 15 22"></polyline>
+        </svg>
+      </span>
+      <span class="nav-label">Inicio</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'explorar'"
+            (click)="navegarTab('explorar')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </span>
+      <span class="nav-label">Explorar</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'viajes'"
+            (click)="navegarTab('viajes')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+          <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Viajes</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'favoritos'"
+            (click)="navegarTab('favoritos')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </span>
+      <span class="nav-label">Favoritos</span>
+    </button>
+    
+    <button class="nav-item" 
+            [class.active]="currentTab === 'perfil'"
+            (click)="navegarTab('perfil')">
+      <span class="nav-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+      </span>
+      <span class="nav-label">Perfil</span>
+    </button>
+  </nav>
+</div>
