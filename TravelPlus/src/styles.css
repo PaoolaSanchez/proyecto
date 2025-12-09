@@ -1,0 +1,140 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* ============================================
+   Estilos globales para marcadores de Leaflet
+   ============================================ */
+
+/* Marcador del destino en destination-detail */
+.custom-marker-destination {
+  background: transparent !important;
+  border: none !important;
+}
+
+.marker-pin-destination {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  animation: bounceMarker 0.5s ease-out;
+}
+
+.marker-pin-destination span {
+  transform: rotate(45deg);
+  font-size: 18px;
+}
+
+/* Popup personalizado del destino */
+.custom-popup-destination .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  overflow: hidden;
+}
+
+.custom-popup-destination .leaflet-popup-content {
+  margin: 0;
+}
+
+.custom-popup-destination .leaflet-popup-tip {
+  background: white;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Marcador del viaje en trip-map */
+.custom-marker {
+  background: transparent !important;
+  border: none !important;
+}
+
+.marker-pin {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #48BB78 0%, #38A169 100%);
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+}
+
+.marker-pin span {
+  transform: rotate(45deg);
+  font-size: 14px;
+}
+
+.custom-popup .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.custom-popup .leaflet-popup-tip {
+  background: white;
+}
+
+/* Animación de rebote para marcadores */
+@keyframes bounceMarker {
+  0% {
+    transform: rotate(-45deg) scale(0);
+  }
+  50% {
+    transform: rotate(-45deg) scale(1.2);
+  }
+  100% {
+    transform: rotate(-45deg) scale(1);
+  }
+}
+
+/* Marcador del viaje con número (trip-detail modal) */
+.custom-marker-trip {
+  background: transparent !important;
+  border: none !important;
+}
+
+.marker-pin-trip {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #48BB78 0%, #38A169 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(72, 187, 120, 0.4);
+  color: white;
+  font-weight: 700;
+  font-size: 14px;
+  animation: bounceMarker 0.5s ease-out;
+  transform: scale(1);
+}
+
+@keyframes bounceMarker {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.custom-popup-trip .leaflet-popup-content-wrapper {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 0;
+  overflow: hidden;
+}
+
+.custom-popup-trip .leaflet-popup-content {
+  margin: 0;
+}
+
+.custom-popup-trip .leaflet-popup-tip {
+  background: white;
+}
