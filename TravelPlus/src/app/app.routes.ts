@@ -19,5 +19,5 @@ export const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'verify-email', component: VerifyEmailComponent },
   { path: 'unirse-viaje/:codigo', component: JoinTripComponent },
-  { path: 'trip-detail/:id', component: (await import('./components/trip-detail/trip-detail.component')).TripDetailComponent }
+  { path: 'trip-detail/:id', component: (await import('./components/trip-detail/trip-detail.component')).TripDetailComponent, data: { renderMode: 'client' } }
 ];
