@@ -1,7 +1,7 @@
 import { ApplicationConfig, provideZoneChangeDetection } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { routes } from './app.routes';
-import { provideClientHydration, withEventReplay } from '@angular/platform-browser';
+// ...existing code...
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { authInterceptor } from './services/auth.interceptor';
 
@@ -16,7 +16,6 @@ export const appConfig: ApplicationConfig = {
     // Router
     provideRouter(routes), 
     
-    // Hydration para SSR (si lo usas)
-    provideClientHydration(withEventReplay()),
+    // ...existing code...
   ]
 };

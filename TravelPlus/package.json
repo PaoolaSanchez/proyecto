@@ -19,17 +19,7 @@
   "watch": "ng build --watch --configuration development",
   
     
-  "test": "ng test",
-  
-    
-  "serve:ssr:TravelPin": "node dist/TravelPin/server/server.mjs",
-  
-    
-  "dev:ssr": "ng build && npm run serve:ssr:TravelPin",
-  
-    
-  "build:ssr": "ng build"
-  
+  "test": "ng test"
   },
   
   "prettier": {
@@ -100,13 +90,10 @@
   "@angular/platform-browser": "^20.3.0",
   
     
-  "@angular/platform-server": "^20.3.0",
+
   
     
-  "@angular/router": "^20.3.0",
-  
     
-  "@angular/ssr": "^20.3.7",
   
     
   "better-sqlite3": "^12.5.0",
