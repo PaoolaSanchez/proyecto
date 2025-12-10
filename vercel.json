@@ -4,6 +4,9 @@
   "buildCommand": "cd TravelPin && npm install && ng build",
   "outputDirectory": "TravelPin/dist/TravelPin/browser",
   "installCommand": "echo 'Install handled in buildCommand'",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/index.html" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
