@@ -10,6 +10,11 @@ export const serverRoutes: ServerRoute[] = [
     path: 'verify-email',
     renderMode: RenderMode.Server
   },
+  // Ruta de detalle de viaje solo en cliente
+  {
+    path: 'trip-detail/:id',
+    renderMode: RenderMode.Client
+  },
   // Todas las demás rutas - Prerender
   {
     path: '**',
