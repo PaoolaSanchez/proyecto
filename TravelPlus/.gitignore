@@ -45,10 +45,10 @@ Thumbs.db
 
 # ========== PRODUCCIÓN ==========
 # Base de datos (no subir datos)
-*.db
+#*.db
 *.sqlite
 *.sqlite3
-/travelpin-backend/BDTravelPin.db
+#/travelpin-backend/BDTravelPin.db
 
 # Variables de entorno (IMPORTANTE)
 .env

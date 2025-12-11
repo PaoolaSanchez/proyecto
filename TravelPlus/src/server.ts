@@ -4,7 +4,7 @@ import {
   isMainModule,
   writeResponseToNodeResponse,
 } from '@angular/ssr/node';
-import express from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import { join } from 'node:path';
 import { mkdirSync, existsSync } from 'node:fs';
 import Database from 'better-sqlite3';
@@ -52,7 +52,7 @@ app.use(
  * Handle all other requests by rendering the Angular application.
  * Skip API routes - they should be handled by the API endpoints above.
  */
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
   // Skip API routes - they are already handled
   if (req.path.startsWith('/api')) {
     return next();
@@ -71,7 +71,7 @@ app.use((req, res, next) => {
  */
 if (isMainModule(import.meta.url) || process.env['pm_id']) {
   const port = process.env['PORT'] || 3000;
-  app.listen(port, (error) => {
+  app.listen(port, (error?: NodeJS.ErrnoException) => {
     if (error) {
       throw error;
     }
