@@ -48,7 +48,7 @@ Thumbs.db
 #*.db
 *.sqlite
 *.sqlite3
-/travelpin-backend/BDTravelPin.db
+#/travelpin-backend/BDTravelPin.db
 
 # Variables de entorno (IMPORTANTE)
 .env
