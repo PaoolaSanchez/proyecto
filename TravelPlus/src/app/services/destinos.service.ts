@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { environment } from '../../environments/environment';
 import { Observable, BehaviorSubject, of } from 'rxjs';
 import { map, tap, catchError } from 'rxjs/operators';
 
@@ -58,8 +59,8 @@ interface DestinoBackend {
   providedIn: 'root'
 })
 export class DestinosService {
-  // Usar ruta relativa para que funcione tanto en cliente como en SSR
-  private apiUrl = '/api';
+  // Usar configuración de entorno para apuntar al backend correcto
+  private apiUrl = environment.apiUrl || '/api';
   
   // Caché de destinos
   private destinosCache = new BehaviorSubject<DestinoCompleto[]>([]);

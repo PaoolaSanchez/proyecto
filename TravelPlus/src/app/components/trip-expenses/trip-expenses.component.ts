@@ -172,7 +172,7 @@ export class TripExpensesComponent implements OnInit, OnDestroy {
         this.gastos = gastosBackend.map(g => ({
           id: g.id,
           descripcion: g.descripcion,
-          monto: g.monto,
+          monto: typeof g.monto === 'string' ? parseFloat(g.monto) || 0 : (g.monto || 0),
           categoria: this.mapearCategoria(g.categoria),
           pagadoPor: g.pagadoPor || g.pagado_por || 'Usuario',
           fecha: g.fecha,
