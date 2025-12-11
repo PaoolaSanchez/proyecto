@@ -1,4 +1,7 @@
-const db = require('better-sqlite3')('BDTravelPin.db');
+const path = require('path');
+const Database = require('better-sqlite3');
+const dbPath = path.join(__dirname, 'BDTravelPin.db');
+const db = new Database(dbPath);
 
 console.log('=== Insertando paquetes de prueba ===');
 

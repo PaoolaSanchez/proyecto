@@ -264,8 +264,10 @@ export class DestinationDetailComponent implements OnInit {
       // Obtener favoritos guardados
       const favoritosGuardados = localStorage.getItem(this.getFavoritosKey());
       let favoritosIds: number[] = favoritosGuardados ? JSON.parse(favoritosGuardados) : [];
-      
-      // Verificar si ya está en favoritos
+      // Normalizar IDs a números para evitar comparaciones fallidas entre string/number
+      favoritosIds = (favoritosIds || []).map((id: any) => Number(id));
+
+      // Verificar si ya está en favoritos (comparación con numbers)
       if (favoritosIds.includes(this.destinoActual.id)) {
         // Si ya existe, eliminarlo
         favoritosIds = favoritosIds.filter(id => id !== this.destinoActual!.id);

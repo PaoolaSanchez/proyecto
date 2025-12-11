@@ -1,11 +1,12 @@
 // seed-database.js - Inicializa la BD con datos si está vacía
 const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
 
-// Usar la misma ruta de BD que el servidor
-const dbPath = process.env.DATABASE_PATH || './BDTravelPin.db';
+// Usar la misma ruta de BD que el servidor: el archivo junto a este script
+const dbPath = process.env.DATABASE_PATH || path.join(__dirname, 'BDTravelPin.db');
 let db;
 
-// Solo crear conexión si no se proporciona una
+// Crear/obtener conexión
 function getDb() {
   if (!db) {
     db = new sqlite3.Database(dbPath);

@@ -1,8 +1,10 @@
 // Script para exportar datos de la BD local
 const sqlite3 = require('sqlite3').verbose();
 const fs = require('fs');
+const path = require('path');
 
-const db = new sqlite3.Database('./BDTravelPin.db');
+const dbPath = path.join(__dirname, 'BDTravelPin.db');
+const db = new sqlite3.Database(dbPath);
 
 const tables = ['usuarios', 'destinos', 'agencias', 'paquetes', 'paquete_itinerario', 'paquete_gastos', 'viajes', 'viaje_destinos', 'gastos', 'participantes', 'favoritos', 'encuestas'];
 

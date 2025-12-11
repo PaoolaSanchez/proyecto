@@ -2,9 +2,11 @@
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const path = require('path');
 
 const JWT_SECRET = 'tu_clave_secreta_aqui_cambiar_en_produccion';
-const db = new sqlite3.Database('./BDTravelPin.db');
+const dbPath = path.join(__dirname, 'BDTravelPin.db');
+const db = new sqlite3.Database(dbPath);
 
 async function testVerification() {
   console.log('🧪 Iniciando prueba de verificación de email...\n');

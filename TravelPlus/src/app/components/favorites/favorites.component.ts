@@ -80,12 +80,15 @@ export class FavoritesComponent implements OnInit {
 
       if (favoritosGuardados) {
         favoritosIds = JSON.parse(favoritosGuardados);
+        // Normalizar IDs a números por seguridad
+        favoritosIds = (favoritosIds || []).map((id: any) => Number(id));
       }
 
       // Convertir IDs a objetos completos con fecha
       this.destinosFavoritos = favoritosIds
         .map(id => {
-          let destino = this.todosLosDestinos.find(d => d.id === id);
+          const idNum = Number(id);
+          let destino = this.todosLosDestinos.find(d => d.id === idNum);
           
           // Si no está en todosLosDestinos, intentar buscar en el caché del servicio
           if (!destino) {
@@ -134,9 +137,10 @@ export class FavoritesComponent implements OnInit {
       const favoritosGuardados = localStorage.getItem(this.getFavoritosKey());
       if (favoritosGuardados) {
         let favoritosIds: number[] = JSON.parse(favoritosGuardados);
+        favoritosIds = (favoritosIds || []).map((id: any) => Number(id));
         favoritosIds = favoritosIds.filter(id => id !== destino.id);
         localStorage.setItem(this.getFavoritosKey(), JSON.stringify(favoritosIds));
-        
+
         this.cargarFavoritos();
         console.log('Destino eliminado de favoritos:', destino.nombre);
       }

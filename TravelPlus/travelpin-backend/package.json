@@ -4,11 +4,12 @@
   "description": "Backend para TravelPlus con Node.js, Express y SQLite",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "bash ./copy-db-if-needed.sh",
     "dev": "nodemon server.js",
     "init-db": "node scripts/seed-database.js",
     "setup-email": "node setup-email.js",
-    "test-verification": "node test-verification.js"
+    "test-verification": "node test-verification.js",
+    "postinstall": "chmod +x ./copy-db-if-needed.sh || true"
   },
   "keywords": [
     "travel",

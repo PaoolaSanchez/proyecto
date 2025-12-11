@@ -376,9 +376,11 @@ export class DestinosService {
   // Sincronizar favoritos desde localStorage o backend
   sincronizarFavoritos(favoritosIds: number[]): void {
     const destinos = this.destinosCache.value;
+    // Aceptar IDs como strings o números: normalizar a números
+    const favoritosNormalizados = (favoritosIds || []).map(id => Number(id));
     const destinosActualizados = destinos.map(destino => ({
       ...destino,
-      esFavorito: favoritosIds.includes(destino.id)
+      esFavorito: favoritosNormalizados.includes(Number(destino.id))
     }));
     this.destinosCache.next(destinosActualizados);
   }

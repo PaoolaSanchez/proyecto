@@ -13,7 +13,9 @@ const JWT_SECRET = process.env.JWT_SECRET || 'tu_clave_secreta_aqui_cambiar_en_p
 
 // SQLite - funciona igual en local y en Railway
 const sqlite3 = require('sqlite3').verbose();
-const dbPath = process.env.DATABASE_PATH || './BDTravelPin.db';
+// Usar ruta absoluta relativa al archivo para evitar dependencias del CWD
+// Prefer `DATABASE_PATH`, fallback to legacy `DB_PATH`, otherwise use local file
+const dbPath = process.env.DATABASE_PATH || process.env.DB_PATH || path.join(__dirname, 'BDTravelPin.db');
 const db = new sqlite3.Database(dbPath, (err) => {
   if (err) {
     console.error('Error al conectar con la base de datos:', err);
