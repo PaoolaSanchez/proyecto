@@ -11,5 +11,5 @@ export const environment = {
   // En producción usar Render
   apiUrl: isProduction 
     ? 'https://proyecto-ep1i.onrender.com/api' 
-    : 'http://localhost:3000/api'
+    : 'http://localhost:10000/api'
 };

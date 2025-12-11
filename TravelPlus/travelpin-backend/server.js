@@ -931,6 +931,26 @@ app.get('/api/agencias/:id/paquetes', (req, res) => {
   });
 });
 
+// GET público: listar agencias (usado por frontend travel-agencies)
+app.get('/api/agencias', (req, res) => {
+  db.all('SELECT id, nombre, descripcion, logo, contacto, email, sitio_web FROM agencias ORDER BY nombre ASC', [], (err, filas) => {
+    if (err) {
+      console.error('Error al listar agencias:', err);
+      return res.status(500).json({ error: 'Error al obtener agencias' });
+    }
+    const agencias = (filas || []).map(a => ({
+      id: a.id,
+      nombre: a.nombre,
+      descripcion: a.descripcion,
+      logo: a.logo,
+      contacto: a.contacto,
+      email: a.email,
+      sitio_web: a.sitio_web
+    }));
+    res.json(agencias);
+  });
+});
+
 // Crear paquete para una agencia
 app.post('/api/agencias/:id/paquetes', (req, res) => {
   const agenciaId = req.params.id;
@@ -1603,31 +1623,21 @@ app.post('/api/viajes', verificarToken, asyncHandler(async (req, res) => {
   }
 }));
 
-// Obtener gastos de un viaje
-app.get('/api/viajes/:id/gastos', verificarToken, (req, res) => {
+// Obtener gastos de un viaje (acceso público - lectura)
+app.get('/api/viajes/:id/gastos', (req, res) => {
   const viajeId = req.params.id;
-  const usuarioId = req.userId;
-  
-  // Verificar que el usuario tenga acceso al viaje
-  verificarAccesoViaje(viajeId, usuarioId, (err, tieneAcceso, rol) => {
-    if (err) {
-      return res.status(500).json({ error: 'Error al verificar acceso' });
-    }
-    if (!tieneAcceso) {
-      return res.status(403).json({ error: 'No tienes acceso a este viaje' });
-    }
-    
-    db.all(
-      'SELECT * FROM gastos WHERE viaje_id = ?',
-      [viajeId],
-      (err2, gastos) => {
-        if (err2) {
-          return res.status(500).json({ error: 'Error al obtener gastos' });
-        }
-        res.json(gastos);
+
+  db.all(
+    'SELECT * FROM gastos WHERE viaje_id = ?',
+    [viajeId],
+    (err2, gastos) => {
+      if (err2) {
+        console.error('Error al obtener gastos para viaje', viajeId, err2);
+        return res.status(500).json({ error: 'Error al obtener gastos' });
       }
-    );
-  });
+      res.json(gastos || []);
+    }
+  );
 });
 
 // Agregar gasto a un viaje
